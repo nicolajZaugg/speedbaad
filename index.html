@@ -730,14 +730,37 @@ function train(){
  next();
 }
 
+
+// ===== Bøjeformer: stage, lille bøje, lysbøje, søkortssymbol =====
+function bandFill(t,x,y,w,h){if(t.stripes){const n=6,sw=w/n;let o='';for(let i=0;i<n;i++)o+=`<rect x="${x+i*sw}" y="${y}" width="${sw+.5}" height="${h}" fill="${t.stripes[i%2]}"/>`;return o}let o='',yy=y;for(const[c,f]of t.bands){o+=`<rect x="${x}" y="${yy}" width="${w}" height="${h*f+.5}" fill="${c}"/>`;yy+=h*f}return o}
+const WATER=`<path d="M0 168 Q15 162 30 168 T60 168 T90 168 T120 168 V200 H0Z" fill="#4f86b8" opacity=".85"/><path d="M0 176 Q15 171 30 176 T60 176 T90 176 T120 176 V200 H0Z" fill="#2f6696"/>`;
+function spar(k,w=110){const t=T[k],id='sp'+(uid++);
+ return `<svg viewBox="0 0 120 200" width="${w}" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="${id}"><rect x="54" y="52" width="12" height="125" rx="2"/></clipPath></defs>${topSVG(t.top,t.tc)}<g clip-path="url(#${id})">${bandFill(t.stripes?{stripes:t.stripes}:t,54,52,12,120)}</g><rect x="54" y="52" width="12" height="125" rx="2" fill="none" stroke="#0004"/>${WATER}</svg>`}
+function small(k,w=110){const t=T[k],id='sm'+(uid++);let shape,top='',y0=110;
+ if(t.top==='cyl'&&!t.stripes&&t.bands.length<=3&&k!=='praef'&&k!=='praefS'&&t.bands[0][0]===R&&t.bands.length===1){shape='M36 112 L84 112 L84 166 L36 166 Z';y0=112}
+ else if(k==='styrbord'){shape='M60 86 L88 166 L32 166 Z';y0=86}
+ else if(k==='sikkert'){shape='M60 100 A34 34 0 1 1 59.9 100 Z';y0=100;top=topSVG(t.top,t.tc).replace(/cy="38"/,'cy="58"')}
+ else{shape='M46 110 L74 110 L84 166 L36 166 Z';top=`<line x1="60" y1="70" x2="60" y2="110" stroke="#555" stroke-width="3"/>`+topSVG(t.top,t.tc).replace(/(y1?|y2|cy|points)="([^"]*)"/g,(m,a,v)=>a==='points'?`points="${v.replace(/(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)/g,(_,x,y)=>x+','+(+y+22))}"`:`${a}="${+v+22}"`).replace(/y="(\d+)"/g,(_,v)=>`y="${+v+22}"`)}
+ return `<svg viewBox="0 0 120 200" width="${w}" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="${id}"><path d="${shape}"/></clipPath></defs>${top}<g clip-path="url(#${id})">${bandFill(t,20,y0,80,168-y0)}</g><path d="${shape}" fill="none" stroke="#0004" stroke-width="1.5"/>${WATER}</svg>`}
+function lysboje(k,w=110){return buoy(k,{w}).replace('<line x1="60" y1="52"','<rect x="53" y="52" width="14" height="14" rx="3" fill="#ffe9a8" stroke="#555"/><line x1="60" y1="66"')}
+const FORMS=[['lys','Lysbøje',lysboje],['small','Lille bøje',small],['spar','Stage',spar],['sym','Søkortssymbol',k=>symbol(k).replace('width="150"','width="110"')]];
+
 // ================= BUOYS =================
 function buoys(){
  app.innerHTML=`<div class="panel"><h3 style="margin-top:0">De 3 vigtigste ting</h3><div style="font-size:14px;line-height:1.6">
  <b>1. Sideafmærkning:</b> For indadgående (nordfra ind i danske farvande, ind i fjorde og havne): <b>grøn til styrbord</b>, <b>rød til bagbord</b>. Ud: omvendt.<br>
  <b>2. Kompasafmærkninger:</b> Nordbøjen passeres nord om – nord for nordbøjen! Farver: <b>sort ved den spidse side, gul ved den flade</b>.<br>
  <b>3. Øvrige:</b> Isoleret fare = sort/rød, 2 kugler (fx stor sten) · Midtfarvand = rød/hvide lodrette striber, 1 rød kugle · Special = gul med X.<br><span class="small">Lysene (urskiven 3–6–9–12) er ikke pensum, men vises som ekstra.</span></div></div>
- <div class="grid">${BK.map(k=>`<div class="card" data-k="${k}">${buoy(k,{w:100})}<div class="k">${T[k].kat}</div><div class="n">${T[k].navn}</div></div>`).join('')}</div><div id="det" style="margin-top:14px"></div>`;
- app.querySelectorAll('.card').forEach(c=>c.onclick=()=>{clearRun();const k=c.dataset.k,t=T[k];$('#det').innerHTML=`<div class="panel q">${'<div style="text-align:center">'+buoy(k,{w:190})+`<div class="night" style="height:110px;margin-top:8px"><div class="lamp" id="lamp" style="top:40px"></div><div class="water" style="height:30px"></div></div><div class="small">Lyset om natten</div></div>`}<div><h2 style="margin:0 0 12px">${t.navn}</h2><dl><dt>Type</dt><dd>${t.kat}</dd><dt>Farve</dt><dd>${t.farve}</dd><dt>Topbetegnelse</dt><dd>${t.topTxt}</dd><dt>Lys</dt><dd>${t.lys}</dd><dt>Betydning</dt><dd>${t.bet}</dd><dt>Passér</dt><dd><b>${t.pass}</b></dd></dl><div class="tip">💡 ${t.huske}</div></div></div>`;stopLight=playLight(t.pat);$('#det').scrollIntoView({behavior:'smooth',block:'nearest'})});
+ <div class="row" style="margin-bottom:10px"><b>Vis alle bøjer som:</b><div style="display:flex;gap:6px;flex-wrap:wrap">${FORMS.map(([f,n],i)=>`<button class="btn ${i?'ghost':''} fbtn" data-f="${f}" style="padding:8px 12px">${n}</button>`).join('')}</div></div>
+ <div class="grid" id="bgrid"></div><div id="det" style="margin-top:14px"></div>`;
+ const drawGrid=f=>{const fn=FORMS.find(x=>x[0]===f)[2];$('#bgrid').innerHTML=BK.map(k=>`<div class="card" data-k="${k}">${fn(k,100)}<div class="k">${T[k].kat}</div><div class="n">${T[k].navn}</div></div>`).join('');app.querySelectorAll('.card').forEach(c=>c.onclick=()=>showB(c.dataset.k));
+  app.querySelectorAll('.fbtn').forEach(b=>b.classList.toggle('ghost',b.dataset.f!==f))};
+ app.querySelectorAll('.fbtn').forEach(b=>b.onclick=()=>drawGrid(b.dataset.f));
+ const showB=k=>{
+ clearRun();const t=T[k];$('#det').innerHTML=`<div class="panel q">${'<div style="text-align:center">'+buoy(k,{w:190})+`<div class="night" style="height:110px;margin-top:8px"><div class="lamp" id="lamp" style="top:40px"></div><div class="water" style="height:30px"></div></div><div class="small">Lyset om natten</div></div>`}<div><h2 style="margin:0 0 12px">${t.navn}</h2><dl><dt>Type</dt><dd>${t.kat}</dd><dt>Farve</dt><dd>${t.farve}</dd><dt>Topbetegnelse</dt><dd>${t.topTxt}</dd><dt>Lys</dt><dd>${t.lys}</dd><dt>Betydning</dt><dd>${t.bet}</dd><dt>Passér</dt><dd><b>${t.pass}</b></dd></dl><div class="tip">💡 ${t.huske}</div></div></div>
+ <div class="panel"><h3 style="margin-top:0">Sådan kan ${t.navn.toLowerCase()} se ud</h3><p class="small" style="margin-top:0">Samme farver og topbetegnelse – forskellig form. Små bøjer og stager har ofte ingen lys${k==='bagbord'||k==='styrbord'?', og her er formen selv "topbetegnelsen": rød = stump/flad, grøn = spids':''}.</p>
+ <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;text-align:center">${FORMS.map(([f,n,fn])=>`<div>${fn(k,110)}<div class="small"><b>${n}</b></div></div>`).join('')}</div></div>`;stopLight=playLight(t.pat);$('#det').scrollIntoView({behavior:'smooth',block:'nearest'})};
+ drawGrid('lys');
 }
 
 // ================= CHEAT SHEET =================
