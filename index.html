@@ -689,22 +689,39 @@ function finishExam(){
   ${x.q.e?`<div class="small" style="margin-top:4px">💡 ${x.q.e}</div>`:''}</div></div>`).join('')||'<p>Ingen fejl – flot! 🎉</p>'};
  draw();$('#onlyWrong').onchange=draw;
  $('#again').onclick=()=>{examState=null;exam()};
- $('#trainweak').onclick=()=>{examState=null;trainTopic='svag';go('train')};
+ $('#trainweak').onclick=()=>{examState=null;trainTopic='svag';tr=null;go('train')};
 }
 
 // ================= TRAIN =================
 let trainTopic=null,tc={n:0,r:0,streak:0};
+let tr=null;
+function roundDeck(t){
+ if(t==='svag'){const used=new Set();return Array.from({length:20},()=>genTopic(weightedTopic(),used))}
+ if(t==='kurs')return shuf(STATIC.filter(b=>b[4]==='K')).map(fromBank);
+ const extra=[];
+ if(t==='afm'){for(const k of CARD){extra.push(BUOYGEN.pass.call(null));}for(let i=0;i<4;i++)extra.push(BUOYGEN.lateral(),BUOYGEN.danger())}
+ return shuf([...buildCards().filter(c=>c.topic===t).map(c=>({...c,ans:c.multi?c.ans:c.ans[0]})),...extra]);
+}
 function train(){
- if(!trainTopic){app.innerHTML=`<h2 style="margin-top:0">🎯 Emnetræning</h2><p class="small">Du får svar og forklaring med det samme efter hvert spørgsmål.</p><div class="topics">
-  <button class="topic" data-t="svag" style="border-color:var(--accent)"><b>⚡ Mine svage punkter</b><span>Blander emner – flest fra dem, du fejler i</span></button><button class="topic" data-t="kurs" style="border-color:#b45309"><b>📘 Kun kursets spørgsmål</b><span>${STATIC.filter(b=>b[4]==='K').length} spørgsmål fra dine Watergames-quizzer og testeksamen</span></button>
+ if(!trainTopic){tr=null;app.innerHTML=`<h2 style="margin-top:0">🎯 Emnetræning</h2><p class="small">Vælg et emne og tag en runde: alle emnets spørgsmål én gang, med svar og forklaring efter hvert spørgsmål. Til sidst kan du tage dine fejl igen.</p><div class="topics">
+  <button class="topic" data-t="svag" style="border-color:var(--accent)"><b>⚡ Mine svage punkter</b><span>20 spørgsmål – flest fra emner, du fejler i</span></button><button class="topic" data-t="kurs" style="border-color:#b45309"><b>📘 Kun kursets spørgsmål</b><span>${STATIC.filter(b=>b[4]==='K').length} spørgsmål fra dine Watergames-quizzer og testeksamen</span></button>
   ${Object.entries(TOPICS).map(([k,t])=>{const p=level(k).txt;return`<button class="topic" data-t="${k}"><b>${t.ikon} ${t.navn}</b><span>${t.besk}<br><i>${p}</i></span></button>`}).join('')}</div>`;
-  app.querySelectorAll('.topic').forEach(b=>b.onclick=()=>{trainTopic=b.dataset.t;tc={n:0,r:0,streak:0};train()});return}
- const used=new Set();
- const next=()=>{clearRun();let q;if(trainTopic==='kurs'){const kp=STATIC.filter(b=>b[4]==='K'&&!used.has(b[1]));const b=pick(kp.length?kp:STATIC.filter(b=>b[4]==='K'));used.add(b[1]);q=fromBank(b)}else{const t=trainTopic==='svag'?weightedTopic():trainTopic;q=genTopic(t,used)}
-  app.innerHTML=`<div class="row"><button class="btn ghost" id="back">← Emner</button><span class="pill">${trainTopic==='svag'?'⚡ Svage punkter':trainTopic==='kurs'?'📘 Kursets spørgsmål':TOPICS[trainTopic].ikon+' '+TOPICS[trainTopic].navn}</span><span class="pill">Rigtige: ${tc.r}/${tc.n} · 🔥 ${tc.streak}</span></div><div class="panel">${qHTML(q)}<div style="text-align:right;margin-top:12px"><button class="btn" id="nx" style="display:none">Næste →</button></div></div>`;
+  app.querySelectorAll('.topic').forEach(b=>b.onclick=()=>{trainTopic=b.dataset.t;tr=null;train()});return}
+ const nm=trainTopic==='svag'?'⚡ Svage punkter':trainTopic==='kurs'?'📘 Kursets spørgsmål':TOPICS[trainTopic].ikon+' '+TOPICS[trainTopic].navn;
+ if(!tr){const d=roundDeck(trainTopic);tr={name:nm,queue:d,total:d.length,i:0,r:0,wrong:[]}}
+ const finish=()=>{clearRun();const p=Math.round(tr.r/tr.total*100);
+  app.innerHTML=`<div class="panel" style="text-align:center"><div class="big" style="color:${p>=90?'var(--ok)':p>=75?'#b45309':'var(--bad)'}">${tr.r}/${tr.total}</div><p style="font-size:17px">${tr.name} – runde færdig (${p} % rigtige)</p>
+  <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">${tr.wrong.length?`<button class="btn" id="redo">🔁 Tag mine ${tr.wrong.length} fejl igen</button>`:''}<button class="btn ghost" id="again">Ny runde i emnet</button><button class="btn ghost" id="back2">← Vælg emne</button></div></div>
+  ${tr.wrong.length?`<div class="panel"><h3 style="margin-top:0">Dine fejl</h3>${tr.wrong.map(q=>`<div style="padding:8px 0;border-bottom:1px solid var(--line);font-size:14px"><b>${q.q.replace(/<[^>]+>/g,'')}</b><br><span style="color:var(--ok)">✔ ${ansTxt(q,q.ans)}</span></div>`).join('')}</div>`:'<p style="text-align:center">🎉 Ingen fejl!</p>'}`;
+  const w=tr.wrong;if($('#redo'))$('#redo').onclick=()=>{tr={name:tr.name+' – fejl',queue:shuf(w),total:w.length,i:0,r:0,wrong:[]};train()};
+  $('#again').onclick=()=>{tr=null;train()};$('#back2').onclick=()=>{trainTopic=null;train()}};
+ const next=()=>{clearRun();if(tr.i>=tr.total)return finish();const q=tr.queue[tr.i];
+  app.innerHTML=`<div class="row"><button class="btn ghost" id="back">← Emner</button><span class="pill">${tr.name}</span><span class="pill">Spørgsmål ${tr.i+1}/${tr.total} · ✅ ${tr.r}</span></div>
+  <div class="bar" style="margin-bottom:12px"><i style="width:${tr.i/tr.total*100}%;background:var(--sea)"></i></div>
+  <div class="panel">${qHTML(q)}<div style="text-align:right;margin-top:12px"><button class="btn" id="nx" style="display:none">${tr.i+1===tr.total?'Se resultat →':'Næste →'}</button></div></div>`;
   startNight(q);$('#back').onclick=()=>{clearRun();trainTopic=null;train()};
   const grade=a=>{const ok=isOk(q,a),A=[].concat(a),C=[].concat(q.ans);app.querySelectorAll('.opt').forEach(x=>{const j=+x.dataset.i;x.disabled=true;if(C.includes(j))x.classList.add('ok');else if(A.includes(j))x.classList.add('bad')});
-   rec(q,ok);tc.n++;if(ok){tc.r++;tc.streak++}else tc.streak=0;const ck=$('#chk');if(ck)ck.style.display='none';
+   rec(q,ok);if(ok)tr.r++;else tr.wrong.push(q);tr.i++;const ck=$('#chk');if(ck)ck.style.display='none';
    const fb=$('#fb');fb.className='fb '+(ok?'ok':'bad');fb.innerHTML=(ok?'✅ <b>Rigtigt!</b> ':'❌ <b>Forkert.</b> Rigtigt svar: <b>'+ansTxt(q,q.ans)+'</b><br>')+(q.e?' '+q.e:'');
    const n=$('#nx');n.style.display='inline-block';n.onclick=next;n.focus()};
   let picked=[];
@@ -773,7 +790,7 @@ function statsView(){
  <div class="panel"><h3 style="margin-top:0">Bøjer (svageste øverst)</h3><p class="small" style="margin-top:0">Pr. bøje: seneste 8 svar, mindst 5 svar før vurdering.</p><table>${rowsB}</table></div>
  <div style="display:flex;gap:8px"><button class="btn" id="drill">⚡ Træn svage punkter</button><button class="btn ghost" id="reset">Nulstil statistik</button></div>
  <p class="small">Gemmes kun i denne browser.</p>`;
- $('#drill').onclick=()=>{trainTopic='svag';tc={n:0,r:0,streak:0};go('train')};
+ $('#drill').onclick=()=>{trainTopic='svag';tr=null;go('train')};
  $('#reset').onclick=()=>modal('Nulstil statistik?','Alle dine resultater slettes.',[['Annullér',()=>{}],['Nulstil',()=>{stats={};history=[];save();statsView()},'warn']]);
 }
 // ================= FLASHCARDS =================
