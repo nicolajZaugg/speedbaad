@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b2540">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Speedbåd">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>Speedbådsprøven – Eksamenstræner</title>
+
+<style>
+:root{--navy:#0b2540;--sea:#13406b;--foam:#eef4f9;--ink:#0b1b2b;--muted:#5b6b7b;--ok:#1f8a4c;--bad:#c62828;--line:#d7e2ec;--accent:#f2b705}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,system-ui,sans-serif;background:var(--foam);color:var(--ink)}
+header{background:linear-gradient(135deg,var(--navy),var(--sea));color:#fff;padding:calc(18px + env(safe-area-inset-top)) 20px 0}
+header h1{margin:0 0 2px;font-size:21px}
+header p{margin:0 0 12px;opacity:.8;font-size:13px}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{background:transparent;border:0;color:#cfe0ef;padding:10px 14px;font:600 14px Inter,sans-serif;border-radius:10px 10px 0 0;cursor:pointer}
+nav button.on{background:var(--foam);color:var(--navy)}
+main{max-width:1000px;margin:0 auto;padding:20px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:14px}
+.btn{background:var(--sea);color:#fff;border:0;border-radius:10px;padding:11px 18px;font:600 14px Inter,sans-serif;cursor:pointer}
+.btn.ghost{background:#e3edf6;color:var(--sea)}
+.btn.warn{background:#b45309}
+.btn:disabled{opacity:.4;cursor:default}
+.pill{background:#e3edf6;border-radius:99px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--sea);white-space:nowrap}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.q{display:grid;grid-template-columns:240px 1fr;gap:22px;align-items:center}
+.q.noimg{grid-template-columns:1fr}
+@media(max-width:680px){.q{grid-template-columns:1fr}}
+.qtext{font-size:17px;font-weight:600;margin:0 0 14px;line-height:1.45}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;background:#f6f9fc;border:2px solid var(--line);border-radius:10px;padding:12px 14px;font:500 15px Inter,sans-serif;cursor:pointer;color:var(--ink);line-height:1.35}
+.opt:hover:not(:disabled){border-color:var(--sea)}
+.opt.sel{border-color:var(--sea);background:#e6f0f9}
+.opt.ok{border-color:var(--ok);background:#e6f5ec}
+.opt.bad{border-color:var(--bad);background:#fdecec}
+.opt:disabled{cursor:default}
+.fb{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:14px;line-height:1.5}
+.fb.ok{background:#e6f5ec}.fb.bad{background:#fdecec}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;cursor:pointer;text-align:center}
+.card:hover{box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.card .k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.card .n{font-weight:600;font-size:14px;margin-top:2px;overflow-wrap:anywhere;hyphens:auto}.card .k{font-size:10px;overflow-wrap:normal;word-break:normal;hyphens:none}
+.topics{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.topic{background:#fff;border:2px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;text-align:left;font-family:Inter,sans-serif}
+.topic:hover{border-color:var(--sea)}
+.topic b{display:block;font-size:15px;margin-bottom:4px}
+.topic span{font-size:13px;color:var(--muted)}
+.qnav{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:5px;margin-bottom:14px}
+.qnav button{height:34px;border-radius:8px;border:2px solid var(--line);background:#fff;font:600 13px Inter,sans-serif;cursor:pointer;color:var(--ink);position:relative}
+.qnav button.ans{background:#dbe8f4;border-color:#9dbbd8}
+.qnav button.cur{border-color:var(--navy);box-shadow:0 0 0 2px var(--navy) inset}
+.qnav button.flag::after{content:'';position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.timer{font-variant-numeric:tabular-nums}
+.timer.low{background:#fdecec;color:var(--bad)}
+.big{font-size:46px;font-weight:700}
+.bar{height:8px;background:#e3edf6;border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.modal{position:fixed;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
+.modal .panel{max-width:420px}
+.tip{background:#fff7d6;border-left:4px solid var(--accent);padding:10px 12px;border-radius:8px;margin-top:12px;font-size:14px}
+.cheat h3{margin:18px 0 6px;font-size:16px;color:var(--sea)}
+.cheat ul{margin:0;padding-left:20px;font-size:14px;line-height:1.6}
+.night{background:radial-gradient(ellipse at 50% 30%,#14233a,#03070d);border-radius:14px;height:200px;position:relative;overflow:hidden}
+.night .water{position:absolute;left:0;right:0;bottom:0;height:60px;background:linear-gradient(#071223,#02060c)}
+.lamp{position:absolute;left:50%;top:80px;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:#000}
+dl{margin:0;display:grid;grid-template-columns:120px 1fr;gap:8px 12px;font-size:14px}dt{color:var(--muted);font-weight:600}dd{margin:0}
+.review{display:flex;gap:14px;align-items:flex-start;font-size:14px;line-height:1.5}
+.review svg{flex:none}
+.small{font-size:13px;color:var(--muted)}
+
+.fc-wrap{perspective:1200px;max-width:640px;margin:0 auto}
+.fc{position:relative;min-height:380px;transition:transform .45s;transform-style:preserve-3d;cursor:pointer}
+.fc.flip{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;overflow:auto;box-shadow:0 6px 20px rgba(11,37,64,.08)}
+.fc-back{transform:rotateY(180deg);background:#f6fafd}
+.fc-face .qtext{font-size:17px}
+.fc-o{font-size:15px;padding:7px 0;border-bottom:1px solid #eef2f6}
+.fc-img{text-align:center;margin-bottom:8px}.fc-img svg{max-height:180px;width:auto}
+.fc-ans{font-size:17px;font-weight:700;color:var(--ok);margin:6px 0 10px}
+.fc-ans span{display:block;margin-bottom:4px}
+.fc-hint{text-align:center;font-size:12px;color:var(--muted);margin-top:8px}
+.fc-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:640px;margin:14px auto 0}
+.fc-btns .btn{padding:14px;font-size:15px}
+
+@media(max-width:600px){header{padding:12px 12px 0}header h1{font-size:18px}header p{display:none}nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}nav button{white-space:nowrap;padding:9px 11px;font-size:13px}main{padding:12px}.panel{padding:14px}}
+</style>
+</head>
+<body>
+<header>
+ <h1>🚤 Speedbådsprøven – Eksamenstræner</h1>
+ <p>Den rigtige prøve: 2 × 15 min · Del 1 max 2 fejl · Del 2 max 3 fejl  ·  Dit træningsmål: kursets testeksamen (max 3 fejl, 0 i vigeregler og bøjer)</p>
+ <nav id="nav">
+  <button data-v="home" class="on">🏠 Start</button>
+  <button data-v="exam">📝 Prøveeksamen</button>
+  <button data-v="train">🎯 Emnetræning</button>
+  <button data-v="buoys">🛟 Bøjer</button>
+  <button data-v="cheat">📋 Huskeregler</button>
+  <button data-v="flash">🃏 Flashcards</button>
+  <button data-v="stats">📊 Statistik</button>
+ </nav>
+</header>
+<main id="app"></main>
+
+<script>
+// ================= UTIL =================
+const shuf=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const pick=a=>a[Math.random()*a.length|0];
+const $=s=>document.querySelector(s);
+const TOPICS={
+ afm:{navn:'Afmærkning',ikon:'🛟',besk:'Bøjer: side-, kompas-, midtfarvands-, special- og fareafmærkning – 0 fejl tilladt i kursets test'},
+ svr:{navn:'Søvejsregler',ikon:'⚖️',besk:'Regel 5–10 og 12–18, lydsignaler, tåge, lanterner'},
+ vig:{navn:'Vigeregler',ikon:'🧭',besk:'Hvem viger? Situationer med diagram, lanterner, overhaling – 0 fejl tilladt i kursets test'},
+ sik:{navn:'Sikkerhed & nød',ikon:'🆘',besk:'MOB, nødsignaler, VHF/DSC, brand, lækage, skipperrollen'},
+ baad:{navn:'Båd & motor',ikon:'⚙️',besk:'Skrog, motor, brændstof, trim, rutinetjek, sejlads i bølger'},
+ nav:{navn:'Navigation & vejr',ikon:'🗺️',besk:'Søkort, GPS/plotter, farvandsudsigter, lokale regler'},
+ man:{navn:'Manøvrer & knob',ikon:'⚓',besk:'Fortøjning, spring, ankring, bøje, bugsering, knob'}
+};
+const EXAMMIX={afm:6,svr:8,vig:4,sik:5,baad:4,nav:2,man:2}; // = 31
+const EXMODES={
+ kursus:{navn:'Kursets testeksamen (træningsmål)',n:38,min:40,max:3,zero:['vig','afm'],mix:{afm:9,vig:9,svr:6,sik:6,baad:4,nav:2,man:2},
+  besk:'38 spørgsmål · højst 3 fejl · 0 fejl i vigeregler og bøjer. Strengere end den rigtige prøve – består du den, er du klar.'},
+ officiel:{navn:'Den rigtige prøve (officiel)',n:31,min:30,partMin:15,max:99,zero:[],mix:{sik:6,baad:4,nav:3,man:2,afm:6,vig:6,svr:4},
+  parts:[{navn:'Del 1 – Kendskab & forståelse',topics:['sik','baad','nav','man'],max:2},{navn:'Del 2 – Skal kunne (søvejsregler + afmærkning)',topics:['afm','vig','svr'],max:3}],
+  besk:'To delprøver à 15 min: Del 1 højst 2 fejl, Del 2 højst 3 fejl – begge skal bestås. Som på Dansk Sejlunions hjemmeside.'}
+};
+
+// ================= QUESTION BANK =================
+// [emne, spørgsmål, [rigtigt, forkert, forkert, forkert], forklaring]
+const BANK=[
+// ---------- SØVEJSREGLER ----------
+['svr','Hvornår skal du holde udkig (regel 5)?',['Altid – ved syn og hørelse og med alle tilgængelige midler','Kun ved nedsat sigtbarhed','Kun når der er andre både i nærheden','Kun om natten'],'Regel 5: Der skal altid holdes forsvarligt udkig – også på en lille speedbåd i godt vejr.'],
+['svr','Hvad er "sikker fart" (regel 6)?',['En fart, hvor du kan undgå kollision og stoppe inden for en passende afstand under de aktuelle forhold','Højst 8 knob','Den fart, båden er bygget til','Samme fart som trafikken omkring dig'],'Sikker fart afhænger af forholdene – der er ingen fast grænse i søvejsreglerne.'],
+['svr','Hvilket forhold indgår IKKE i vurderingen af sikker fart?',['Hvor travlt du har','Sigtbarheden','Trafiktætheden','Vind, sø og strøm'],'Regel 6 nævner bl.a. sigtbarhed, trafiktæthed, manøvreevne, baggrundslys om natten, vind/sø/strøm og vanddybde.'],
+['svr','Du pejler et skib, der nærmer sig, og pejlingen ændrer sig ikke mærkbart. Hvad betyder det?',['Der er fare for kollision','Skibet sejler væk fra dig','I passerer klar af hinanden','Skibet ligger stille'],'Regel 7: Konstant pejling + aftagende afstand = kollisionsfare.'],
+['svr','Du er i tvivl om, hvorvidt der er fare for kollision. Hvad gør du?',['Går ud fra, at faren er til stede','Fortsætter uændret','Venter, til det er helt tydeligt','Øger farten for at komme forbi'],'Regel 7: Ved tvivl skal man antage, at der er kollisionsfare.'],
+['svr','Hvordan skal en manøvre for at undgå kollision udføres (regel 8)?',['I god tid og så kraftig, at det andet skib tydeligt kan se den','Lille og gradvis, så du ikke forvirrer','Helst i sidste øjeblik','Kun ved at sætte farten ned'],'Regel 8: Tydelige, rettidige kurs- og/eller fartændringer – ikke en række små ændringer.'],
+['svr','I et snævert løb – hvor skal du holde dig (regel 9)?',['Så nær løbets yderkant om styrbord, som det er sikkert','Midt i løbet','Ved yderkanten om bagbord','Der hvor der er dybest'],'Regel 9: Hold til styrbord i snævre løb.'],
+['svr','Du sejler speedbåd i et snævert løb. Et stort skib, der kun kan navigere i løbet, kommer imod dig. Hvad gælder?',['Du må ikke hindre det store skibs passage','Det store skib skal vige for dig','Den, der kommer fra styrbord, viger','I skal begge dreje til bagbord'],'Regel 9: Fartøjer under 20 m må ikke hindre skibe, der kun kan navigere sikkert i løbet.'],
+['svr','Må du ankre i et snævert løb?',['Nej, det skal så vidt muligt undgås','Ja, uden begrænsninger','Ja, hvis du viser ankerlys','Kun om dagen'],'Regel 9: Undgå at ankre i snævre løb.'],
+['svr','Hvordan krydser du en trafikbane i et trafiksepareringssystem?',['Med kurs så vidt muligt vinkelret på trafikretningen','Skråt med trafikken','Langs separationszonen','Det er forbudt for fritidsbåde'],'Regel 10: Kryds i ret vinkel, så du er kortest tid i banen.'],
+['svr','Hvad gælder for din speedbåd (under 20 m) i et trafiksepareringssystem?',['Du må ikke hindre sikker passage af maskindrevne skibe, der følger trafikbanen','Du har altid ret til at holde kurs','Du skal sejle i separationszonen','Du skal altid kalde trafikcentralen'],'Regel 10: Fartøjer under 20 m og sejlskibe må ikke hindre skibe, der følger banen.'],
+['svr','Hvem har vigepligt ved overhaling (regel 13)?',['Altid den, der overhaler – uanset bådtype','Den langsomste','Sejlbåden','Den, der bliver overhalet'],'Regel 13 går forud for alle andre vigeregler: Overhaleren viger altid.'],
+['svr','Hvornår er du "overhalende"?',['Når du nærmer dig fra mere end 22,5° agten for det andet skibs tværs','Når du sejler hurtigere end den anden','Når du er mindre end 10 m bag den anden','Kun i snævre løb'],'Om natten svarer det til, at du kun kan se den andens hvide hæklanterne.'],
+['svr','Du indhenter et skib om natten. Hvilket lys ser du på det?',['Kun den hvide hæklanterne','Både rød og grøn sidelanterne','Kun den grønne sidelanterne','En rød rundtlysende'],'Hæklanternen lyser 135° agterud – ser du kun den, er du overhalende.'],
+['svr','To motorbåde mødes stævn mod stævn (regel 14). Hvad gør de?',['Begge drejer til styrbord og passerer bagbord mod bagbord','Den mindste viger','Begge drejer til bagbord','Begge stopper'],'Regel 14: Begge drejer til styrbord.'],
+['svr','To motorbåde har skærende kurser (regel 15). Hvem viger?',['Den, der har den anden på sin styrbords side','Den, der har den anden på sin bagbords side','Den hurtigste','Den største'],'Huskeregel: "Den fra højre har ret" – har du den anden om styrbord, viger du.'],
+['svr','Hvad skal et vigepligtigt skib ved skærende kurser så vidt muligt undgå?',['At gå foran om det andet skib','At sætte farten ned','At dreje til styrbord','At gå agten om det andet skib'],'Regel 15: Gå agten om – ikke foran.'],
+['svr','Hvad skal det kursholdende skib gøre (regel 17)?',['Holde kurs og fart – men selv manøvrere, hvis det er klart, at den vigepligtige ikke gør det','Dreje væk med det samme','Stoppe helt','Altid dreje til bagbord'],'Regel 17: Hold kurs og fart, men du må/skal handle, hvis den anden ikke viger.'],
+['svr','Som kursholdende ved skærende kurser: hvad bør du undgå, hvis du selv må manøvrere?',['At dreje til bagbord for et skib på din egen bagbords side','At dreje til styrbord','At sætte farten ned','At give lydsignal'],'Regel 17: Drej ikke mod det skib, der kommer fra bagbord – I kan begge dreje samme vej.'],
+['svr','Din motorbåd møder en sejlbåd, der sejler for sejl alene. Hvem viger?',['Motorbåden – medmindre motorbåden bliver overhalet af sejlbåden','Sejlbåden','Den, der kommer fra styrbord','Den største'],'Regel 18: Maskindrevne viger for sejlskibe. Men overhaling (regel 13) går forud.'],
+['svr','En sejlbåd har sejlene oppe OG motoren kørende fremad. Hvad regnes den som?',['Et maskindrevet skib','Et sejlskib','Et fiskende skib','Et manøvrehæmmet skib'],'Så snart motoren driver båden frem, er den maskindrevet – også med sejl oppe.'],
+['svr','Hvilket dagsignal viser en sejlbåd, der sejler for motor med sejl oppe?',['En kegle med spidsen nedad','En sort kugle','To sorte kugler','En cylinder'],'Keglen med spidsen nedad viser "jeg er maskindrevet trods sejlene".'],
+['svr','Hvem skal en motorbåd vige for ifølge regel 18?',['Manøvreudygtige, manøvrehæmmede (begrænset i manøvreevne), fiskende skibe, sejlskibe – og skibe til ankers','Kun sejlskibe','Kun skibe, der er større end den selv','Ingen – motorbåde har altid ret'],'Regel 18: Maskindrevet viger for alle fire typer.'],
+['svr','Hvad er et "fiskende skib" efter søvejsreglerne?',['Et skib, der fisker med garn, liner, trawl el.lign., som begrænser manøvreevnen','En jolle med en lystfisker med stang','Enhver fiskerkutter','En fiskerkutter, der ligger i havn'],'Fiskeri med dorg/stang, der ikke begrænser manøvreevnen, giver ikke særstatus.'],
+['svr','Hvem skal et sejlskib vige for?',['Manøvreudygtige, manøvrehæmmede og fiskende skibe','Alle motorbåde','Ingen','Kun skibe over 50 m'],'Regel 18: Sejlskibet viger for de tre "handicappede" typer.'],
+['svr','To sejlbåde har vinden ind fra hver sin side. Hvem viger (regel 12)?',['Den med vinden ind om bagbord','Den med vinden ind om styrbord','Den største','Den hurtigste'],'Regel 12: Bagbords halse viger for styrbords halse.'],
+['svr','To sejlbåde har vinden ind fra samme side. Hvem viger?',['Den, der er til luvart (mod vinden), viger for den i læ','Den i læ viger','Den forreste','Den mindste'],'Regel 12: Luvbåden viger.'],
+['svr','Hvad betyder ÉN kort tone fra et skib, I kan se hinanden?',['Jeg drejer til styrbord','Jeg drejer til bagbord','Jeg bakker','Jeg er i tvivl om dine hensigter'],'Regel 34: 1 kort = styrbord, 2 korte = bagbord, 3 korte = bak.'],
+['svr','Hvad betyder TO korte toner?',['Jeg drejer til bagbord','Jeg drejer til styrbord','Jeg bakker','Jeg er stoppet'],'Regel 34.'],
+['svr','Hvad betyder TRE korte toner?',['Min maskine går bak','Jeg drejer til styrbord','Jeg ligger for anker','Jeg agter at overhale'],'Regel 34: Tre korte = jeg bakker.'],
+['svr','Hvad betyder mindst FEM korte, hurtige toner?',['Jeg er i tvivl om dine hensigter – advarsel','Nødsignal','Jeg drejer til styrbord','Jeg ligger for anker'],'Kan suppleres med 5 korte, hurtige lysblink.'],
+['svr','Hvor lang er en "kort tone"?',['Ca. 1 sekund','4–6 sekunder','10 sekunder','Et halvt minut'],'En lang tone er 4–6 sekunder.'],
+['svr','I et snævert løb giver du to lange og én kort tone. Hvad betyder det?',['Jeg agter at overhale dig om din styrbords side','Jeg agter at overhale dig om din bagbords side','Jeg er enig','Jeg bakker'],'To lange + to korte = om din bagbords side. Lang-kort-lang-kort = samtykke.'],
+['svr','Hvad betyder lang-kort-lang-kort i et snævert løb?',['Samtykke – du må overhale','Nødsignal','Jeg drejer til bagbord','Jeg ligger stille'],'Det skib, der bliver overhalet, giver samtykke med signalet.'],
+['svr','Hvilket signal giver du, når du nærmer dig et sving i et løb, hvor andre kan være skjult?',['Én lang tone','Tre korte toner','To lange toner','Fem korte toner'],'Regel 34: Én lang tone ved sving/skjulte områder.'],
+['svr','Hvilket tågesignal giver et maskindrevet skib MED fart gennem vandet?',['Én lang tone mindst hvert 2. minut','To lange toner hvert 2. minut','Én lang og to korte','Fem korte toner'],'Regel 35.'],
+['svr','Hvilket tågesignal giver et maskindrevet skib, der er stoppet og ligger uden fart?',['To lange toner med ca. 2 sekunders mellemrum mindst hvert 2. minut','Én lang tone hvert 2. minut','Tre korte toner','Ingen signal'],'Regel 35.'],
+['svr','Hvilket tågesignal giver et sejlskib?',['Én lang tone efterfulgt af to korte','Én lang tone','To lange toner','Fem korte toner'],'Sejlskibe, fiskende, manøvrehæmmede m.fl. giver lang-kort-kort.'],
+['svr','Hvilke krav til lydsignal gælder for en båd under 12 m i tåge?',['Den skal ikke give de foreskrevne signaler, men et andet effektivt lydsignal mindst hvert 2. minut','Den skal ikke give nogen signaler','Den skal give én lang tone hvert minut','Den skal ligge stille'],'Regel 33/35: Fartøjer under 12 m skal have et effektivt lydsignalmiddel.'],
+['svr','I tåge hører du et tågesignal tilsyneladende forude for tværs. Hvad gør du?',['Sætter farten ned til mindste styrefart og tager om nødvendigt al fart af','Øger farten for at komme hurtigt væk','Drejer kraftigt til bagbord','Fortsætter med uændret kurs og fart'],'Regel 19: Reducér farten og naviger med stor forsigtighed, indtil faren er overstået.'],
+['svr','Hvad er vigtigt for båden ved nedsat sigtbarhed?',['Lanterner tændt, lydsignalmiddel klar, sikker fart og gerne en radarreflektor','Kun at tågehornet virker','At sejle hurtigt i havn, inden det bliver værre','At slukke lanternerne for at spare strøm'],'Bliv set og hørt – og sejl med sikker fart.'],
+['svr','Hvilke farver har sidelanternerne?',['Rød om bagbord og grøn om styrbord','Grøn om bagbord og rød om styrbord','Begge hvide','Gul og blå'],'"Portvin er rød" – port = bagbord.'],
+['svr','Om natten ser du kun en rød lanterne fra et andet fartøj. Hvad ser du?',['Fartøjets bagbords side','Fartøjets styrbords side','Fartøjets agterende','Et ankret fartøj'],'Rød = bagbord.'],
+['svr','Du ser både en rød og en grøn lanterne og en hvid toplanterne over dem. Hvad betyder det?',['Et maskindrevet fartøj kommer lige imod dig','Et fartøj sejler væk fra dig','Et ankret fartøj','Et sejlskib under sejl'],'Begge sidelanterner = stævnen peger mod dig.'],
+['svr','Hvilke lanterner må en motorbåd under 12 m vise i stedet for toplanterne og hæklanterne?',['Ét hvidt rundtlysende lys + sidelanterner','Kun sidelanterner','Kun et rødt rundtlysende lys','Ingen lanterner'],'Regel 23: Under 12 m må toplanterne + hæklanterne erstattes af et hvidt rundtlys.'],
+['svr','Hvordan viser et fartøj, at det ligger for anker?',['Om natten et hvidt rundtlysende lys, om dagen en sort kugle','Rødt rundtlys og sort kegle','To røde rundtlys','Gult blinklys'],'Regel 30.'],
+['svr','Hvilken vinkel og farve har hæklanternen?',['Hvid, 135° agterud','Hvid, 225° forud','Rød, 112,5°','Grøn, 360°'],'Sidelanterner 112,5°, toplanterne 225°, hæklanterne 135°.'],
+
+
+['afm','Hvornår er du "for indadgående" i Danmark?',['Ind i de danske farvande nordfra, ind i fjorde og ind i havne','Når du sejler mod nord','Når du sejler med strømmen','Når du sejler ud af en havn'],'Retningen for indadgående er vist med en pil i søkortet.'],
+['afm','Hvordan er de grønne og røde bøjer, når du er for indadgående?',['Grønne til styrbord, røde til bagbord','Grønne til bagbord, røde til styrbord','Begge til styrbord','Det afhænger af vinden'],''],
+['afm','Hvor kan du se retningen for indadgående?',['Med en pil i søkortet','På bøjens nummer','På VHF kanal 16','Det kan kun ses fra land'],'Nogle steder (fx ved Aalborg, Esbjerg, Sønderborg, Svendborg og Ulvsund) kan man sejle "ind" fra to sider, og afmærkningen vender.'],
+['afm','Hvilken huskeregel gælder for farverne på en kompasafmærkning?',['Sort ved den spidse side og gul ved den flade side af keglerne','Gul ved den spidse side, sort ved den flade','Altid sort øverst','Altid gul i midten'],'Fx vestbøje: flad øverst og flad nederst → gul top og bund, sort i midten.'],
+['afm','Hvad markerer en isoleret fareafmærkning?',['En isoleret hindring, fx en stor sten, med sejlbart vand omkring','Midten af en sejlrende','Et kapsejladsområde','Indsejlingen til en havn'],'Sort med rødt bånd og to sorte kugler.'],
+['afm','Hvad markerer en midtfarvandsafmærkning?',['Midten eller starten af en sejlrende','En isoleret sten','Et forbudsområde','Et nyt vrag'],'Rød/hvide lodrette striber, én rød kugle, hvidt lys.'],
+['afm','Hvad markerer en gul specialafmærkning?',['Et område med restriktioner – fx skydeterræn, fredningsområde, arbejdsområde eller forbudszone','Sikkert vand','En sten','Bagbords side af løbet'],''],
+['svr','Hvordan konstaterer du, om der er fare for sammenstød?',['Ved gentagne pejlinger – ændrer vinklen til det andet skib sig ikke, er der fare','Ved at se på skibets farve','Ved at kalde på VHF','Ved at øge farten'],'Man kan aldrig undskylde sig med, at man ikke troede, der var fare for sammenstød.'],
+['svr','Du kan ikke afgøre, hvem der skal vige. Hvad gør du?',['Regner med, at det er dig, der skal vige','Holder kurs og fart','Venter på den anden','Giver fem korte toner og fortsætter'],'Safety first.'],
+['svr','Hvordan skal det skib, der viger, som udgangspunkt vige?',['Bagom det andet skib – tidligt og med en klar manøvre','Foran det andet skib','Ved at sætte farten lidt ned','I sidste øjeblik'],''],
+['svr','Du er kursholdende fritidsbåd og møder et stort erhvervsfartøj. Hvad bør du gøre?',['Vælge at vige – tidligt og tydeligt','Holde kurs og fart for enhver pris','Sejle tæt forbi','Give lydsignal og fortsætte'],'Selvom du ikke skal vige, kan du vælge at gøre det – så er det ekstra vigtigt, at det sker tidligt og tydeligt.'],
+['svr','Om natten ser du den anden båds RØDE lanterne. Hvad gælder for dig?',['Du skal vige','Du kan sejle (holde kurs og fart)','Begge drejer til bagbord','Det er et ankret skib'],'Rød = den anden har dig på sin bagbords side → du har den om styrbord og skal vige.'],
+['svr','Om natten ser du den anden båds GRØNNE lanterne. Hvad gælder for dig?',['Du kan sejle – hold kurs og fart, men vær klar til at manøvrere','Du skal vige','Du skal stoppe','Begge drejer til styrbord'],'Grøn = den anden har dig på sin styrbords side og skal vige.'],
+['svr','Om natten ser du kun den anden båds HVIDE agterlanterne. Hvad gælder for dig?',['Du indhenter den og skal vige','Den skal vige for dig','I skal begge dreje til styrbord','Det er et ankret skib'],'Du er overhalende – indtil 67,5° fra den anden båds sejlretning set agterfra.'],
+['svr','Hvornår er du overhalende ifølge kurset?',['Når du ser den anden båds agterlanterne – dvs. inden for 67,5° fra dens sejlretning set agterfra','Når du er hurtigst','Når du er mindre end 50 m bag den anden','Kun i snævre løb'],'Svarer til mere end 22,5° agten for tværs.'],
+['svr','En sejlbåd indhenter din motorbåd. Hvem viger?',['Sejlbåden – den indhentende viger altid','Motorbåden','Den største','Den fra styrbord'],'Overhaling går forud for alt andet.'],
+['svr','Hvad er rækkefølgen i "vigerækkefølgen" (den første viger for de efterfølgende)?',['Indhentende – maskindrevet – sejlskib – fisker – begrænset i manøvreevne – for anker','Sejlskib – maskindrevet – fisker – for anker','For anker – fisker – sejlskib – maskindrevet','Den største viger altid'],'Generelt viger det skib, der har nemmest ved at manøvrere.'],
+['svr','Skal en motorbåd vige for et skib, der ligger for anker?',['Ja','Nej, ankrede skibe skal selv flytte sig','Kun om natten','Kun hvis det er større'],''],
+['svr','Hvad er et eksempel på et skib, der er "begrænset i sin manøvreevne"?',['Et skib, der udlægger kabler, uddyber eller slæber','En motorbåd med motorstop','En sejlbåd under sejl','En fiskerkutter i havn'],'Det viser det med lanterner og/eller dagsignaler.'],
+['svr','Hvilke midler skal du bruge til udkig?',['Alle forhåndenværende: syn, hørelse, kikkert, radar og AIS','Kun syn','Kun radar','Kun når det er mørkt'],'Udkig hele tiden og hele vejen rundt – skærpet ved tæt trafik eller nedsat sigtbarhed.'],
+['svr','Hvad skal du IKKE tage hensyn til, når du vælger sikker fart?',['Hvor hurtigt båden kan sejle','Dybgang','Baggrundslys fra land','Besætningens kompetencer'],'Afpas efter sigtbarhed, trafiktæthed, manøvreevne, vind/sø/strøm, dybgang og baggrundslys.'],
+['svr','Hvad betyder "godt sømandskab"?',['Viden, færdigheder, planlægning, forsigtighed og hensyntagen','At kende alle knob','At sejle hurtigt og sikkert','At have den nyeste båd'],'Intet i reglerne hindrer dig i at gøre alt for at undgå sammenstød.'],
+
+
+['svr','Hvilket dagsignal viser et skib, der ligger for anker?',['En sort kugle','To sorte kugler','En kegle med spidsen nedad','Kugle – rude – kugle'],''],
+['svr','Hvad betyder to sorte kugler lodret over hinanden?',['Skibet er manøvreudygtigt','Skibet ligger for anker','Skibet fisker','Skibet sejler for motor med sejl oppe'],'Om natten: to røde rundtlys.'],
+['svr','Hvad betyder dagsignalet kugle – rude – kugle?',['Skibet er begrænset i sin manøvreevne','Skibet er manøvreudygtigt','Skibet ligger for anker','Dykker nede'],''],
+['svr','Hvad betyder to kegler med spidserne mod hinanden?',['Skibet er i gang med at fiske','Skibet er manøvreudygtigt','Skibet sejler for motor med sejl oppe','Skibet ligger for anker'],''],
+['svr','Hvad betyder kodeflag A (hvid og blå med svalehale)?',['Dykker ude – passér forsigtigt med mindst 50 m afstand','Jeg har lods om bord','Jeg er i nød','Jeg ligger for anker'],''],
+['sik','Hvad betyder flagene N over C?',['Nødsignal – jeg er i nød og har brug for hjælp','Jeg har dykker nede','Jeg er manøvreudygtig','Hold afstand'],''],
+['sik','Korrekt eller forkert: Et rødt nødblus må bruges som almindeligt lys, når man skal lægge til om natten.',['Forkert','Korrekt'],'Nødsignaler må kun bruges ved nød.'],
+['svr','Korrekt eller forkert: Hvis du er i tvivl om, hvorvidt der er fare for sammenstød, skal du gå ud fra, at der er.',['Korrekt','Forkert'],'Regel 7.'],
+['vig','Korrekt eller forkert: En sejlbåd, der indhenter en motorbåd, skal vige.',['Korrekt','Forkert'],'Den indhentende viger altid – uanset bådtype.'],
+['afm','Korrekt eller forkert: En østbøje skal passeres øst om.',['Korrekt','Forkert'],'Østbøjen passeres øst om – øst for østbøjen!'],
+['baad','Hvad er forskellen på en 2-takts og en 4-takts motor, når det gælder olie?',['4-takts har separat oliesystem (olie i bundkarret); 2-takts har olie blandet i benzinen','2-takts har separat olie, 4-takts blandes','Ingen af dem bruger olie','Begge kører på diesel'],''],
+['baad','Hvornår bruger en speedbåd mest brændstof pr. sømil?',['Når den er lige ved at komme op i planing (i overgangen) og ved fuld gas','Ved jævn marchfart i planing','Ved tomgang i havn','Brændstofforbruget er altid det samme'],'En båd, der "kæmper" for at komme op på planing, bruger meget brændstof uden at komme frem.'],
+['baad','Hvad betyder CE-kategori C?',['Kystnære områder – fx Øresund','Alle farvande','Åbent farvand – fx Kattegat','Beskyttede farvande – fjorde og søer'],'A: alle farvande · B: åbent farvand · C: kystnære områder · D: beskyttede farvande.'],
+['baad','Hvad betyder CE-kategori D?',['Beskyttede farvande – fjorde og søer','Alle farvande','Åbent farvand – fx Kattegat','Kystnære områder – fx Øresund'],''],
+['sik','Hvordan bruger du VHF-anlægget til at sende MAYDAY med tale?',['Kanal 16, tryk på talen-knappen, sig MAYDAY ×3 og "her er" + bådens navn ×3, derefter position og situation','Kanal 70 med tale','Ring 112 via VHF','Send en SMS'],''],
+['nav','Hvad gælder for lokale sejladsbestemmelser?',['De kan fx fastsætte fartbegrænsninger og forbudsområder og skal følges ud over søvejsreglerne','De gælder kun for erhvervsskibe','De erstatter søvejsreglerne','De gælder kun om natten'],''],
+
+
+// ---------- FRA DIT KURSUS (Watergames: quizzer + testeksamen) ----------
+['svr','Hvor gælder de internationale søvejsregler?',['I alle farvande, der kan besejles fra verdenshavene','Kun i internationalt farvand','Kun i de indre danske farvande, søer, åer og kanaler','Kun for erhvervsskibe'],'','K'],
+['nav','Hvor finder man oplysninger om lokale bestemmelser?',['Hos den lokale politikreds, Naturstyrelsen og evt. kommunen','Hos Søfartsstyrelsen','Hos Justitsministeriet','I søvejsreglerne'],'Kommuner, politikredse og havne kan fastsætte særlige bestemmelser.','K'],
+['nav','Hvilke restriktioner gælder for motorbåde inden for 300 meter fra kysten?',['Man må kun sejle direkte til/fra kysten (vinkelret) og højst 5 knob – ikke plane','Man må ikke fiske i området','Området må kun besejles, når der ikke er badende','Der gælder ingen restriktioner'],'300-meter-reglen!','K'],
+['nav','Hvor langt skal man typisk ud fra kysten, før man må plane?',['300 meter','50–100 meter','100–200 meter','500 meter'],'Inden for 300 m: kun direkte til/fra land og max 5 knob.','K'],
+['nav','Hvad er den typiske hastighedsbegrænsning i havne?',['3 knob','10 knob','15 knob','Der er ingen'],'I mange fjorde og smalle farvande er der også generelle begrænsninger, fx 5 knob.','K'],
+['baad','Hvad fastsætter bådens CE-mærkning?',['Bådens tilladte farvandskategori, maksimalt antal ombordværende og maksimal motorstørrelse','Bådens byggemateriale','Hvor hurtigt båden må sejle','Hvem der må føre båden'],'','K'],
+['baad','CE-kategori B betyder ifølge kurset…',['Åbent farvand – fx Kattegat','Alle farvande','Kystnære områder – fx Øresund','Beskyttede farvande – fjorde og søer'],'A: alle farvande · B: åbent farvand (Kattegat) · C: kystnære områder (Øresund) · D: beskyttede farvande (fjorde og søer).','K'],
+['nav','Hvad må du smide i havet?',['Frisk fiskeaffald – og intet andet','Alt, hvad der kan spises','Alt biologisk nedbrydeligt materiale','Glasflasker, da de synker'],'','K'],
+['nav','Hvad er promillegrænsen for føreren af en speedbåd?',['0,5 promille','0,0 promille','0,2 promille','Der er ingen fast grænse'],'Samme som for bilkørsel.','K'],
+['nav','Hvor gammel skal føreren af en speedbåd mindst være?',['16 år','15 år','18 år','14 år'],'Man kan tage prøven fra 15 år, men beviset gælder først fra 16 år.','K'],
+['svr','Hvordan skal man holde udkig?',['Hele vejen rundt og hele tiden','Ved hvert vagtskifte, dog mindst en gang i timen','Kun til styrbord, fordi man skal vige for skibe derfra','Kun når der er trafik'],'','K'],
+['svr','Hvad har indflydelse på sikker fart?',['Trafiktæthed, sigtbarhed, manøvreevne, besætningens kompetencer, bølgehøjde og genskin fra land og skibe','Brændstofforbruget','Muligheden for at nå i havn inden solnedgang','Hvor ny båden er'],'','K'],
+['vig','Du er på skærende kurs med et andet skib, men kan ikke sikkert afgøre, om der er fare for sammenstød. Hvad gør du?',['Forholder mig, som om der er fare for sammenstød','Sejler tættere på','Kalder Lyngby Radio','Ændrer hastighed og venter'],'','K'],
+['vig','Du er på kollisionskurs og har konstateret, at du skal vige. Hvordan viger du?',['Laver først en tydelig kursændring, retter lidt op og går bag det andet skib med god afstand','Laver en lille kursændring og sejler lige bag det andet skib','Holder kurs og venter på at se, om den anden viger','Sætter farten op og går foran'],'','K'],
+['vig','Du er på skærende kurs, og det andet skib skal vige for dig. Hvad gør du?',['Holder min nuværende kurs og fart','Sætter farten op','Sætter farten ned','Drejer til bagbord'],'','K'],
+['vig','Du sejler motorbåd og er på kollisionskurs med en sejlbåd, som du ser på din bagbords side. Hvem viger?',['Jeg skal vige for sejlbåden – motorbåd står højere i vigehierarkiet','Sejlbåden skal vige – der er højrevigepligt','Hvis motorbåden er over 50 fod, skal sejlbåden vige','Begge drejer til styrbord'],'','K'],
+['vig','Du sejler motorbåd (A) og er på kollisionskurs med en anden motorbåd (B), som du ser på din styrbords side. Hvem viger?',['Jeg (A) skal vige','B skal vige','Vi skal begge vige til styrbord','Den hurtigste skal vige'],'','K'],
+['vig','Hvis du ifølge reglerne skal vige for et skib på skærende kurs, skal du:',['Gå agten om det andet skib','Altid dreje til bagbord','Ændre kurs 180 grader','Sætte farten op'],'','K'],
+['vig','Hvis du i et snævert løb møder et stort skib, skal du:',['Vise særligt hensyn – og som udgangspunkt vige','Afgive et lyssignal','Afgive et lydsignal','Kaste anker og hejse ankerkuglen'],'Det store skib kan have svært ved at manøvrere pga. størrelse og dybgang.','K'],
+['vig','Sandt eller falsk: Mindre fartøjer må ikke genere større fartøjer i et snævert løb.',['Sandt','Falsk'],'','K'],
+['vig','Du sejler motorbåd og ser en hvid og en grøn lanterne fra et andet skib på din bagbords side. Der er fare for sammenstød. Hvem viger?',['Det andet skib – jeg holder kurs og fart','Jeg skal vige','Begge drejer til styrbord','Begge drejer til bagbord'],'Grøn = du kan sejle.','K'],
+['vig','Du sejler motorbåd og ser en hvid og en rød lanterne fra et andet skib på din styrbords side. Der er fare for sammenstød. Hvem viger?',['Jeg skal vige','Det andet skib skal vige','Begge drejer til bagbord','Ingen – vi har begge ret'],'Rød = du skal vige.','K'],
+['svr','Hvilke lys skal et maskindrevet skib vise efter solnedgang?',['Sidelys, agterlys og toplys','Kun sidelys og agterlys','Kun toplys','Intet – motorbåde er fritaget'],'Lanterner skal være tændt fra solnedgang til solopgang og ved nedsat sigtbarhed.','K'],
+['svr','Om natten ser du et skib, der kun viser et grønt lys. Hvad ser du?',['Et sejlskibs styrbords side','Et maskindrevet skibs styrbords side','Et maskindrevet skibs bagbords side','Et sejlskibs bagbords side'],'Ingen hvid toplanterne = sejlskib.','K'],
+['svr','Hvad betyder en sort kegle med spidsen nedad (trekant) på et skib med sejl?',['Sejlskib, der både går for sejl og motor – regnes som maskindrevet','Skibet ligger for anker','Nødsignal','Skibet beder om assistance'],'','K'],
+['svr','Et maskindrevet skib under 7 meter og under 7 knob må nøjes med at vise…',['Ét hvidt lys hele horisonten rundt','Kun sidelanterner','Et rødt rundtlys','Ingen lys'],'','K'],
+['svr','Hvornår viser et maskindrevet skib to toplys?',['Når det er over 50 meter','Når det slæber','Når det ligger for anker','Altid om natten'],'Under 50 m: ét toplys.','K'],
+['svr','Et skib giver to korte toner. Hvad betyder det?',['Skibet drejer til bagbord','Skibet drejer til styrbord','Skibet går i bak','Skibet er i nød'],'','K'],
+['svr','Du vil overhale et skib i en smal kanal på dets styrbords side. Hvilket signal giver du?',['Lang – lang – kort','Lang – lang – kort – kort','Lang – kort – lang – kort','Fem korte'],'','K'],
+['svr','I tåge hører du to lange toner. Hvad er det for et skib?',['Et maskindrevet skib, der ligger stille','Et maskindrevet skib, der gør fart','Et sejlskib','En fisker'],'','K'],
+['svr','I tåge hører du én lang tone. Hvad er det for et skib?',['Et maskindrevet skib','En sejlbåd','En fisker','En ankerligger'],'','K'],
+['svr','I tåge hører du én lang og to korte toner. Hvad er det for et skib?',['Fx et sejlskib (også fisker, begrænset manøvreevne m.fl.)','Et maskindrevet skib i fart','En ankerligger','Et maskindrevet skib, der ligger stille'],'','K'],
+['svr','Hvad betyder signalflag L (Lima)?',['Stop','Dykker ude','Jeg ønsker kontakt med myndigheder','Jeg har lods om bord'],'','K'],
+['svr','Hvordan skal du passere en båd med dykkerflag (signalflag A)?',['Med forsigtighed og mindst 50 meters afstand','Tæt forbi for at tilbyde hjælp','Med høj fart, så du hurtigt er forbi','Flaget har ingen betydning for dig'],'','K'],
+['afm','Du sejler ind i Mariager Fjord og skal holde dig i den afmærkede sejlrende. Hvad skal du være opmærksom på?',['Jeg skal have røde sideafmærkninger på min bagbords side','Jeg skal have grønne sideafmærkninger på min bagbords side','Jeg skal have gule specialafmærkninger på min styrbords side','Jeg skal holde mig midt mellem to gule bøjer'],'Ind i fjorde = indadgående.','K'],
+['afm','Hvad betyder bogstaverne "YBY" ved en vestlig kompasafmærkning i søkortet?',['Yellow – Black – Yellow (farverne fra top til bund)','Yellow – Blue – Yellow','Yellow – Bright – Yellow','Yellow – Black – Blue'],'Tilsvarende: BY = nord, BYB = øst, YB = syd.','K'],
+['afm','Hvilken topbetegnelse har en specialafmærkning?',['Gult kryds','Rød kugle','Gul kegle','Blå cylinder'],'','K'],
+['afm','Hvilken farve lys har en grøn sideafmærkning?',['Grønt','Hvidt','Gult','Rødt'],'Rød blinker rødt, kompas/isoleret/midtfarvand blinker hvidt, special blinker gult.','K'],
+['afm','Hvilken farve lys har en isoleret fareafmærkning?',['Hvidt','Gult','Rødt','Grønt'],'','K'],
+['afm','Hvad betyder det, når to sejladsbåker på land står over hinanden?',['Du er i båkelinjen – den sejlbare linje ved ind- og udsejling','Du er i et lufthavnsområde','Der ligger et kabel','Du er i et skydeområde'],'Båker står parvist på land (forbåke og bagbåke). Kabelbåker markerer kabler, hvor man ikke må ankre.','K'],
+['sik','Hvilket sikkerhedsudstyr er obligatorisk i et fritidsfartøj?',['En godkendt redningsvest i passende størrelse pr. person','En VHF-radio','En ildslukker','En redningsflåde'],'Det er ikke et krav, at man har vesten på.','K'],
+['sik','Hvad er forskellen på en redningsvest og en svømmevest?',['En redningsvest kan vende en bevidstløs person, så luftvejene er over vandet','En redningsvest er altid orange','En redningsvest har altid et lys','Der er ingen forskel'],'','K'],
+['sik','Hvad skal der til, for at en brand kan opstå?',['Brandbart materiale, varme og ilt','Kun benzin og en gnist','Varme og vand','Strøm og brændstof'],'','K'],
+['sik','Hvilke af disse er nødsignaler til alarmering?',['MAYDAY over radioen, røde raketter/håndblus/orange røg og flagene N over C','Hvid røg og grønne blus','At vifte med et flag','Signalflag L'],'Grønne blus, hvid røg og at hæve/sænke én arm er opmærksomhedssignaler – ikke nød.','K'],
+['sik','Hvilket er IKKE et nødsignal?',['Grøn raket','Rød raket','Orange røg','Uafbrudt larm'],'Grønne blus/raketter er opmærksomhedssignaler.','K'],
+['sik','Hvilket er IKKE et nødsignal?',['Hvid raket','Rød raket','Morsekode SOS','At hæve og sænke armene'],'','K'],
+['sik','Hvad er et opmærksomhedssignal (ikke nød)?',['Grønt nødblus, hvid røg eller at hæve og sænke én arm','Rød raket','Orange røg','N over C'],'','K'],
+['sik','Hvor meget brændstof skal du som minimum have med?',['Planlagt forbrug + 50 % om sommeren og + 100 % om vinteren','Planlagt forbrug + 10 liter','Planlagt forbrug + 10 %','Præcis det planlagte forbrug'],'','K'],
+['sik','Hvad kendetegner en god ankerbugt?',['Læ for vind og bølger, ikke for dybt, god holdebund og plads til at svaje','Så dybt som muligt og langt fra land','Tæt på havn med mobildækning','Midt i sejlrenden'],'Undgå sten og tang. Sæt ankeret med motoren i bak.','K'],
+['sik','Hvor meget ankerkæde/ankerline skal man bruge?',['Ca. 5 gange dybden','Ca. 2 gange bådlængden','Minimum 20 meter','Samme som dybden'],'','K'],
+['sik','Hvor mange personer må der være om bord?',['Det antal, der står i CE-godkendelsen – dog højst det antal, der er redningsveste til','Der er ingen regler','8 på åbent hav, 10 ved kysten','Så mange, der kan sidde ned'],'','K'],
+['sik','Hvordan behandles en underafkølet person (hypotermi)?',['Langsom opvarmning indefra – tæpper og noget varmt at drikke','Grundig massage af arme og ben','Lidt alkohol for at varme op','Et varmt brusebad med det samme'],'Ingen massage og ingen alkohol.','K'],
+['sik','Hvad må motoren ikke være ved en MOB-manøvre, når du er under to bådlængder fra personen/MOB-bøjen?',['I gang eller i gear','I frigear','Slukket','Trimmet ned'],'Nærm dig med meget lav fart, og stop helt ved siden af personen.','K'],
+['sik','Hvad betyder MAYDAY?',['Alvorlig og overhængende fare for skib eller besætning med behov for øjeblikkelig hjælp','Motorstop i godt vejr','Brug for slæb','Navigationsadvarsel'],'Alle skibe har pligt til at hjælpe et skib, der udsender nødsignal.','K'],
+['sik','Hvordan passerer du robåde og andre "bløde sejlende"?',['Langsomt og i god afstand','Hurtigt, så du er hurtigt forbi','Tæt på for at vinke','Med lydsignal'],'Din hækbølge kan være voldsom for dem.','K'],
+['sik','Hvad er godt sømandskab?',['At vise hensyn til dyr, badende og robåde','At sejle tæt på molehoveder','At passere sejlbåde i kort afstand','At hilse med hornet'],'','K'],
+['nav','Hvordan sejler man ind i en havn?',['Med lav fart og god afstand til molehovederne','Med høj fart for ikke at blokere indsejlingen','Tæt på molen for at spare tid','Midt i indsejlingen med fuld fart'],'','K'],
+['nav','Hvad er vigtige elementer i planlægningen af en sikker sejlads?',['Vejrmelding, at båden er sødygtig, sikkerhedsudstyr og beregning af brændstofforbrug','Indkøb af mad og drikke','Bluetooth-højtaler med musik','At have fuld mobilbatteri'],'Og informér en kontakt i land om rute og hjemkomst.','K'],
+['nav','Hvorfor er der øget risiko ved sejlads i tordenvejr?',['Der kan komme pludselig kraftig vind','Man kan ikke høre tågehorn','Lyn ødelægger nattesynet','Kompasset virker ikke'],'','K'],
+['nav','Tur på 30 sømil om sommeren. Marchfart 15 knob, forbrug 10 liter/time. Hvor meget brændstof skal du mindst have med?',['30 liter','20 liter','40 liter','15 liter'],'30/15 = 2 timer × 10 L = 20 L + 50 % = 30 L.','K'],
+['nav','Tur på 30 sømil om sommeren. Båden sejler 12 knob og bruger 10 liter/time. Hvor meget brændstof skal du mindst have med?',['37,5 liter','25 liter','30 liter','50 liter'],'10 × (30/12) = 25 L + 50 % = 37,5 L (kursets eget eksempel).','K'],
+['nav','Hvis dit skib bruger 3 liter pr. sømil og turen er 10 sømil, skal du medbringe:',['30 liter og en reserve','10 liter og en reserve','5 liter og en reserve','1 liter og en reserve'],'','K'],
+['nav','Hvordan bestemmer du bådens brændstofforbrug?',['Fyld tanken, sejl en længere tur med normal marchfart, og fyld tanken igen','Slå op i motorens instruktionsbog','Spørg sælgeren','Aflæs brændstofmåleren'],'','K'],
+['nav','Hvordan påvirker høje bølger og modvind brændstofforbruget?',['Det bliver væsentligt større','Det bliver mindre','Det påvirkes ikke','Man skal skifte brændstoftype'],'','K'],
+['nav','Hvad indgår i kontrollen af båden før hver sejlads?',['Brændstofmængde, sikkerhedsudstyr og om alt ser ud, som det plejer (fx vand i båden)','Kun om der er begroning på bunden','Kun om båden er ren','Kun vejrudsigten'],'Motor: brændstof og olie før start, køling efter start.','K'],
+
+
+// ---------- AFKRYDSNING: vælg flere (som på kursussiden) ----------
+['sik','Hvilke ting skal være til stede, for at en brand kan opstå? (vælg gerne flere)',{c:['Brandbart materiale','Varme','Ilt'],w:['Vand']},'Brandtrekanten – fjern én af dem, og branden går ud.','K'],
+['sik','Hvilke signaler er nødsignaler til brug ved alarmering? (vælg gerne flere)',{c:['Ordet MAYDAY sagt over radioen','Røde raketter, røde håndblus og rød/orange røg','Signalflag N (November) over signalflag C (Charlie)'],w:['Hvid røg','At vifte med flaget','Signalflag L (Lima)']},'Hvid røg er et opmærksomhedssignal, L betyder "stop".','K'],
+['nav','Hvilke elementer kan indgå i kontrollen af båden inden hver sejlads? (vælg gerne flere)',{c:['Kontrol af brændstofmængden på tanken','Kontrol af sikkerhedsudstyr','Kontrol af, om alt ser ud, som det plejer (fx vand i båden "forkerte steder")'],w:['Kontrol af, om der er begroning på bunden']},'','K'],
+['sik','Hvilke er opmærksomhedssignaler – altså IKKE nødsignaler? (vælg gerne flere)',{c:['Grønne nødblus/raketter','Hvid røg','At hæve og sænke én arm'],w:['Røde raketter','Orange røg','At hæve og sænke begge arme']},'','K'],
+['svr','Hvilke midler skal du bruge til at holde udkig? (vælg gerne flere)',{c:['Syn','Hørelse','Kikkert','Radar','AIS'],w:['Ekkolod']},'Alle forhåndenværende midler – hele tiden og hele vejen rundt.','K'],
+['svr','Hvad skal du afpasse farten efter (sikker fart)? (vælg gerne flere)',{c:['Sigtbarhed','Trafiktæthed','Vind-, sø- og strømforhold','Baggrundslys fra land og andre skibe'],w:['Hvor travlt du har','Hvor dyr båden er']},'','K'],
+['vig','Hvem skal en motorbåd vige for? (vælg gerne flere)',{c:['Et sejlskib (for sejl alene)','En fisker i gang med at fiske','Et skib, der er begrænset i sin manøvreevne','Et skib, der ligger for anker'],w:['En motorbåd, der indhenter dig','En sejlbåd, der sejler for motor']},'Den, der indhenter, viger altid – og en sejlbåd for motor regnes som maskindrevet.','K'],
+['sik','Hvordan behandler du en underafkølet person? (vælg gerne flere)',{c:['Pak personen ind i tæpper','Giv noget varmt at drikke','Varm langsomt op indefra'],w:['Massér arme og ben','Giv en lille smule alkohol']},'Ingen massage og ingen alkohol.','K'],
+['nav','Hvad hører med til planlægningen af en sikker sejlads? (vælg gerne flere)',{c:['Tjek af vejrmeldingen','Tjek af, om båden er sødygtig','Tjek af sikkerhedsudstyr','Beregning af brændstofforbrug','En kontakt i land, der kender ruten'],w:['Indkøb af mad og drikke']},'','K'],
+['afm','Hvilke afmærkninger blinker HVIDT? (vælg gerne flere)',{c:['Kompasafmærkninger','Isoleret fareafmærkning','Midtfarvandsafmærkning'],w:['Specialafmærkning','Rød sideafmærkning','Grøn sideafmærkning']},'Special blinker gult, sideafmærkninger rødt/grønt.','K'],
+['sik','Hvad er obligatorisk/lovkrav om bord i et fritidsfartøj? (vælg gerne flere)',{c:['En godkendt redningsvest i rigtig størrelse til hver person'],w:['At alle har redningsvesten på','En VHF-radio','En redningsflåde']},'Det er ikke et krav at have vesten på – men den skal være der. Pas på: Ét rigtigt svar kan også være svaret i et "vælg flere"-spørgsmål.','K'],
+
+// ---------- SIKKERHED ----------
+['sik','Hvilken VHF-kanal bruges til nødopkald med tale?',['Kanal 16','Kanal 70','Kanal 12','Kanal 6'],'Kanal 16 er nød-, il- og anråbningskanal.'],
+['sik','Hvilken VHF-kanal bruges til DSC (digital selektiv kald)?',['Kanal 70','Kanal 16','Kanal 9','Kanal 72'],'På kanal 70 sendes kun digitale signaler – ikke tale.'],
+['sik','Hvad sker der, når du trykker på den røde DSC-nødknap?',['Der sendes automatisk en nødalarm med bådens MMSI-nummer og position (hvis GPS er tilsluttet)','Kystradio ringer dig op på mobilen','Alle både i nærheden får en SMS','Motoren stopper'],'Herefter følges op med MAYDAY-melding på kanal 16.'],
+['sik','Hvornår må du sende MAYDAY?',['Når båd eller personer er i alvorlig og overhængende fare','Når motoren er gået i stå i godt vejr','Når du har brug for et slæb til havn','Når du ser en drivende container'],'MAYDAY = alvorlig og umiddelbar fare for liv eller fartøj.'],
+['sik','Hvad bruges PAN PAN til?',['Ilmeddelelse – fx motorstop tæt på land eller en syg person, uden umiddelbar livsfare','Alvorlig og overhængende livsfare','Vejrmeldinger','Almindelig samtale med en anden båd'],'PAN PAN = haster, men ikke MAYDAY-niveau.'],
+['sik','Hvad bruges SECURITE til?',['Sikkerhedsmeddelelse, fx navigationsadvarsel om en drivende genstand','Nødopkald','Ilmeddelelse om syg person','Bestilling af havneplads'],'SECURITE = sikkerhed/advarsel.'],
+['sik','Hvordan indledes en MAYDAY-melding?',['MAYDAY tre gange, "her er" og bådens navn tre gange','Bådens position','Antal personer om bord','"Hallo, er der nogen?"'],'Derefter: MAYDAY + navn, position, hvad der er sket, hvilken hjælp, antal personer, OVER.'],
+['sik','Hvilke oplysninger er vigtigst i en MAYDAY-melding?',['Position, hvad der er sket, hvilken hjælp du har brug for og antal personer','Bådens farve og motorstørrelse','Hvem der ejer båden','Hvor du sejlede fra'],'Positionen er det allervigtigste.'],
+['sik','Hvad er IKKE et anerkendt nødsignal?',['At vifte med et hvidt håndklæde','Langsomt at hæve og sænke de udstrakte arme','Orange røgsignal','Rød faldskærmsraket'],'Nødsignaler: røde blus/raketter, orange røg, armbevægelser, SOS, MAYDAY, vedvarende lydsignal m.fl.'],
+['sik','Hvilket nummer kan du ringe til fra mobilen ved nød på søen?',['112','114','1813','70 10 20 30'],'112 sætter dig i forbindelse med søredningstjenesten (JRCC).'],
+['sik','Hvad er det første, du gør ved mand over bord?',['Råber "mand over bord", kaster redningskrans og sætter én til at holde øje med og pege på personen','Ringer 112 og venter','Bakker hurtigt hen til personen','Sætter fuld fart på for at vende'],'Øjenkontakt med personen er afgørende – du mister hurtigt overblikket i bølger.'],
+['sik','Til hvilken side drejer du straks ved mand over bord?',['Mod den side, personen faldt ud – så hækken og propellen svinger væk','Væk fra den side, personen faldt ud','Det er ligegyldigt','Du drejer slet ikke – du stopper motoren'],'Så holder du propellen fri af personen.'],
+['sik','Hvad gør du, når du er tæt på personen i vandet?',['Sætter i frigear/stopper motoren, før personen kommer tæt på propellen','Holder farten for at bevare styringen','Bakker hen mod personen','Sejler forbi og kaster en line'],'Propellen er livsfarlig – frigear/stop, når det er sikkert.'],
+['sik','Hvad bruger du MOB-knappen på GPS/plotter til?',['Til at gemme positionen, hvor personen faldt over bord','Til at kalde kystradio','Til at stoppe motoren','Til at tænde nødlys'],'Så kan du finde tilbage, selv hvis du mister øjenkontakten.'],
+['sik','Hvad betyder 1-10-1 reglen ved fald i koldt vand?',['1 minut kuldechok, 10 minutter brugbar bevægelse, ca. 1 time før bevidstløshed af nedkøling','1 time kuldechok, 10 min. svømning, 1 min. bevidstløshed','1 redningsvest til 10 personer','Max 1 person i vandet ad gangen'],'De første minutter er de farligste – derfor redningsvest.'],
+['sik','Hvordan bjærger du helst en nedkølet person, der har været længe i vandet?',['Vandret, så kredsløbet ikke kollapser','Lodret, hurtigst muligt','Ved at trække i armene','Personen skal selv kravle op'],'Vandret bjærgning mindsker risikoen for kredsløbskollaps.'],
+['sik','Hvor mange redningsveste skal der være om bord?',['Én i passende størrelse til hver person om bord','Én til føreren','To uanset antal personer','Én pr. 2 personer'],'Og de skal være let tilgængelige – helst på.'],
+['sik','Hvad er formålet med nødstoplinen (dødemandsknappen)?',['Den fastgøres til føreren og stopper motoren, hvis føreren falder over bord eller væk fra roret','Den bruges til at fortøje båden','Den stopper båden ved grundstødning','Den tænder nødlyset'],'Uden nødstopline kan båden sejle videre – og ramme den faldne.'],
+['sik','Hvad består brandtrekanten af?',['Brændstof, ilt og varme','Vand, ilt og brændstof','Benzin, diesel og olie','Gnist, røg og varme'],'Fjern ét af de tre, og branden går ud.'],
+['sik','Hvorfor skal motorrummet ventileres, inden en benzinmotor startes?',['Benzindampe er tungere end luft, samles i bunden og kan eksplodere','For at køle motoren ned','For at tørre tændrørene','Det er kun et krav for diesel'],'Kør blæseren et par minutter før start.'],
+['sik','Hvad er korrekt ved tankning af benzin?',['Stop motoren, ingen rygning/åben ild, luk luger, tør spild op og ventilér før start','Lad motoren køre, så batteriet lader','Fyld tanken helt til randen','Tank med åbne luger, så dampene kan komme ind'],'Spild og dampe er den store brandrisiko.'],
+['sik','Der er brand i motorrummet. Hvad gør du?',['Stopper motoren, lukker for brændstoffet og sprøjter slukningsmiddel ind gennem en lille åbning','Åbner lugen helt for at se branden','Kaster vand på','Øger farten for at blæse ilden ud'],'At åbne lugen helt tilfører ilt.'],
+['sik','Hvad må en benzinbrand IKKE slukkes med?',['En vandstråle','En pulverslukker','En kulsyreslukker','Et brandtæppe'],'Vand spreder brændende benzin.'],
+['sik','Båden tager vand ind. Hvad gør du?',['Starter lænsepumpen, finder og stopper lækagen, får alle i redningsvest og alarmerer i tide','Venter og ser, om det stopper','Øger farten mod nærmeste havn uden at gøre andet','Springer i vandet'],'Alarmér hellere for tidligt end for sent.'],
+['sik','Båden er kæntret, men flyder stadig. Hvad bør du gøre?',['Blive ved båden – den er lettere at finde end en person','Svømme mod land med det samme','Dykke ned og hente udstyr','Tage redningsvesten af for at svømme bedre'],'En båd er langt mere synlig for redningstjenesten.'],
+['sik','Hvorfor bør du give en "sejlplan" til nogen på land?',['Så nogen kan slå alarm, hvis du ikke kommer tilbage til tiden','Det er lovpligtigt for alle ture','Så havnen kan opkræve havnepenge','For at få forsikringsdækning'],'Fortæl hvor du sejler, hvem der er med, og hvornår du er tilbage.'],
+['sik','Hvad er skipperens ansvar?',['Båden og alle om bord – sikkerhedsinstruktion, navigation, ædruelighed og sømandsmæssig sejlads','Kun at styre båden','Kun at betale for brændstof','Ansvaret deles ligeligt mellem alle om bord'],'Skipperen har det fulde ansvar.'],
+['sik','Hvad skal en sikkerhedsinstruktion til passagererne indeholde?',['Redningsveste, hvor nødudstyr er, hvad man gør ved mand over bord og hvordan man sidder/holder fast','Bådens pris og topfart','Hvordan man tanker','Ingenting – passagerer skal bare sidde ned'],'Alle om bord skal kunne hjælpe, hvis skipperen falder over bord.'],
+['sik','Du ser en anden båd sende nødsignal. Hvad gør du?',['Yder hjælp, så godt du kan uden at bringe dig selv i alvorlig fare, og alarmerer','Sejler videre – det er ikke dit ansvar','Tager billeder til politiet','Venter, til andre reagerer'],'Der er pligt til at hjælpe personer i nød.'],
+
+// ---------- BÅD & MOTOR ----------
+['baad','Hvad kendetegner en dyb V-bund?',['Blød og god gang i bølger, men kræver mere motorkraft og er mindre stabil ved stilstand','Hurtig i planing og meget stabil i stilstand','Kan kun sejle i stille vand','Ligner en deplacementsbåd'],'Dyb V skærer igennem bølgerne.'],
+['baad','Hvad kendetegner en båd med flad bund?',['Kommer let op i planing og er stabil i stille vand, men hård og urolig i bølger','Er den mest søgående type','Er langsom og tung','Kan ikke plane'],'Flad bund "slår" hårdt i bølger.'],
+['baad','Hvad er forskellen på en deplacementsbåd og en planende båd?',['Deplacementsbåden skubber vandet til side og har begrænset topfart; den planende løftes op og glider på vandet','Der er ingen forskel','Den planende er altid længere','Deplacementsbåde er altid sejlbåde'],'Speedbåde er planende.'],
+['baad','Hvordan placerer du passagererne under høj fart?',['Siddende, så de kan holde fast, med vægten fordelt så båden ligger plant','Stående i stævnen for udsyn','Alle samlet i den ene side','Siddende på rælingen'],'Stævnen er hårdest ramt af slag fra bølger.'],
+['baad','Hvad kan du læse på bådens CE-plade (producentens skilt)?',['Max antal personer, max last, max motorkraft og designkategori','Bådens værdi','Hvornår båden sidst var til service','Hvor båden må sejle hen'],'Overskrid aldrig producentens anbefalinger.'],
+['baad','Hvad kræver en 2-takts udenbordsmotor?',['Olie blandet i benzinen (eller en separat olietank med automatisk blanding)','Diesel','Kun ren benzin uden olie','Elektrisk opladning'],'Følg producentens blandingsforhold.'],
+['baad','Hvad viser "kontrolstrålen" på en udenbordsmotor?',['At kølevandet cirkulerer – mangler den, skal du stoppe motoren','At der er brændstof nok','At olien er skiftet','At propellen er hel'],'Uden kølevand bliver motoren hurtigt overophedet. Tjek vandindtaget.'],
+['baad','Hvad er et hækaggregat (sterndrive/Z-drev)?',['En indenbordsmotor med et udenbords drev gennem agterspejlet','En udenbordsmotor med to propeller','En elmotor','En jetmotor'],'Kombinerer indenbords motor med drejeligt drev.'],
+['baad','Hvordan skal brændstoftanken være placeret og monteret?',['Fastspændt, ventileret, væk fra varmekilder og gnister og med tilgængelig afspærring','Løst, så den kan flyttes hurtigt','Ved siden af batteriet','Inde i kahytten'],'Brændstof og gnister skal holdes adskilt.'],
+['baad','Hvordan skal batteriet være monteret?',['Fastgjort, ventileret og med afdækkede poler – og med en let tilgængelig hovedafbryder','Løst i bunden af båden','Under brændstoftanken','Det er ligegyldigt'],'Kortslutning kan give brand.'],
+['baad','Hvad bruges hovedafbryderen til?',['At afbryde al strøm fra batteriet – fx når båden forlades eller ved brand','At stoppe motoren under sejlads','At tænde lanternerne','At starte lænsepumpen'],'Slå den fra, når båden forlades (lænsepumpe kan have separat forsyning).'],
+['baad','Motoren vil ikke starte. Hvad tjekker du først?',['Nødstopline, frigear, brændstof (hane, udluftning, primer) og batteri','Propellens stigning','Bådens trim','Lanternerne'],'De fleste startproblemer skyldes nødstop, gear eller brændstof.'],
+['baad','Udenbordsmotoren med løs tank går i stå efter få minutter. Hvad er den mest sandsynlige årsag?',['Tankens udluftning er lukket, så der opstår vakuum','Propellen er for stor','Der er for meget olie i','Batteriet er fuldt'],'Åbn udluftningsskruen på tankdækslet.'],
+['baad','Hvad bruges primer-pæren (gummibolden) på brændstofslangen til?',['At pumpe brændstof frem til motoren før start','At måle olieniveauet','At lufte motorrummet','At tømme tanken'],'Pump, til den er fast.'],
+['baad','I hvilket gear skal en motor startes?',['Frigear','Frem','Bak','Det er ligegyldigt'],'De fleste motorer har startspærre i gear – af god grund.'],
+['baad','Hvad sker der, når du trimmer motoren IND (ned)?',['Stævnen presses ned – båden kommer lettere op i planing og ligger bedre i modsø','Stævnen løftes','Båden får højere topfart på fladt vand','Båden krænger til siden'],'Trim ind ved start/planing og i modsø.'],
+['baad','Hvad sker der, hvis du trimmer motoren for meget UD (op)?',['Stævnen løftes for meget, og båden kan "springe som en delfin" (porpoising)','Stævnen graver sig ned','Motoren stopper','Båden krænger'],'Lidt trim ud giver fart på fladt vand – for meget giver ustabilitet.'],
+['baad','Båden krænger til bagbord under fart. Hvilken trimflap sænker du?',['Bagbords flap – den løfter bagbords side','Styrbords flap','Begge flaps','Ingen – du flytter motoren'],'En sænket flap løfter sin egen side.'],
+['baad','Hvad sker der, når du sænker begge trimflaps?',['Agterenden løftes og stævnen sænkes – hjælper båden op i planing','Stævnen løftes','Båden sejler hurtigere i bak','Båden krænger til styrbord'],'Trimflaps virker som små vinger på agterspejlet.'],
+['baad','Hvad hører med til rutinetjek før afgang?',['Brændstof, olie, kølevand, propel, nødstopline, lænsepumpe, lanterner og vejrudsigt','Kun brændstof','Kun at båden er vasket','Kun lanterner om dagen'],'Et par minutters tjek forebygger de fleste problemer.'],
+['baad','Hvad gør du, inden du forlader båden i havn?',['Stopper motor, slår hovedafbryder fra, lukker for brændstof, tager nøgle/nødstopline og fortøjer forsvarligt med fendere','Lader motoren stå i tomgang','Lader nøglen sidde i','Lader lugerne stå åbne'],'Og tjek fortøjningerne mod vind og vandstand.'],
+['baad','Hvorfor skal du bakke forsigtigt med en speedbåd?',['Der kan komme vand ind over det lave agterspejl','Det skader propellen','Motoren kan ikke tåle bak','Det er forbudt i havne'],'Især i bølger og med vægt agter.'],
+['baad','Hvem har ansvaret for skader forårsaget af din hækbølge?',['Du som fører – sæt farten ned nær havne, badende, mindre både og kyster','Ingen – bølger er naturens skyld','Havnefogeden','Den, der bliver ramt'],'Din bølge kan vælte joller og skade fortøjede både.'],
+['baad','Hvad er faren ved sejlads i medsø (bølgerne bagfra)?',['Stævnen kan grave sig ned i bølgen foran, og båden kan blive kastet på tværs (broache)','Ingen fare','Motoren bliver for kold','Båden kan ikke komme op i planing'],'Tilpas farten, så du ligger på bagsiden af bølgen.'],
+['baad','Hvordan sejler du bedst i modsø?',['Sætter farten ned og trimmer stævnen ned','Sætter fuld fart på','Trimmer stævnen helt op','Sejler med bølgerne lige på tværs'],'Høj fart i modsø giver hårde slag og risiko for skader.'],
+['baad','Hvordan foretager du et korrekt hurtigstop?',['Advarer passagererne og tager gassen hurtigt tilbage til neutral, så båden bremser','Slår motoren fra med nøglen','Sætter i bak med fuld gas','Drejer rattet helt i bund'],'Advar altid først – passagerer kan blive kastet frem.'],
+['baad','Hvilket brændstof er mest brandfarligt?',['Benzin – dampene antændes meget let','Diesel','De er lige farlige','Ingen af dem er brandfarlige'],'Derfor ventilation før start ved benzinmotorer.'],
+
+// ---------- NAVIGATION & VEJR ----------
+['nav','Hvor lang er en sømil?',['1852 meter','1000 meter','1609 meter','2000 meter'],'1 sømil = 1 bueminut på breddegraden.'],
+['nav','Hvad er 1 knob?',['1 sømil i timen','1 km i timen','1 meter i sekundet','1 mil i timen'],''],
+['nav','Hvor aflæser du distancer i et søkort?',['På breddeskalaen i kortets side, ud for det sted, du måler','På længdeskalaen øverst','På kompasrosen','Med en lineal i cm'],'1 bueminut på breddeskalaen = 1 sømil.'],
+['nav','Du sejler 20 knob. Hvor langt når du på 15 minutter?',['5 sømil','20 sømil','3 sømil','15 sømil'],'20 sømil/time × ¼ time = 5 sømil.'],
+['nav','Hvor lang tid tager 12 sømil med 24 knob?',['30 minutter','12 minutter','1 time','2 timer'],'12 / 24 = 0,5 time.'],
+['nav','I hvilken enhed er dybderne angivet i danske søkort?',['Meter','Fod','Favne','Sømil'],''],
+['nav','Hvad er en vigtig begrænsning ved GPS/plotter?',['Den kan svigte (strøm, signal), kortdata kan være unøjagtige, og detaljer kan forsvinde, når du zoomer ud','Den viser altid den præcise dybde','Den kan ikke vise din fart','Den virker kun om dagen'],'Hav altid papirkort eller anden backup – og hold udkig.'],
+['nav','Hvordan holdes søkort opdaterede?',['Med rettelser fra "Efterretninger for Søfarende"','Det behøver de ikke','Ved at købe nyt kort hvert 10. år','Via vejrudsigten'],'Ældre kort kan mangle nye afmærkninger og forhindringer.'],
+['nav','Hvor finder du lokale sejladsbestemmelser, fx fartbegrænsninger?',['I havnelodsen, havnereglementet og på skilte – og i søkortet','Kun i søvejsreglerne','På VHF kanal 70','Der findes ingen lokale regler'],'Mange havne og kanaler har fartbegrænsning.'],
+['nav','Hvor får du den officielle farvandsudsigt?',['Hos DMI','Hos Søfartsstyrelsen','Hos havnefogeden','Fra GPS-plotteren'],'DMI udsender farvandsudsigter og varsler.'],
+['nav','I hvilken enhed angiver DMI vindstyrken?',['Meter pr. sekund','Knob','Beaufort','Km/t'],''],
+['nav','Hvornår udsendes der kulingsvarsel?',['Ved middelvind på 14 m/s eller mere','Ved 8 m/s','Ved 25 m/s','Ved regn'],'Kuling er for meget for de fleste speedbåde.'],
+['nav','Hvorfor er fralandsvind farlig for en lille båd?',['Vandet ser roligt ud ved kysten, men bølgerne vokser længere ude, og du kan drive til søs ved motorstop','Den giver altid tåge','Den presser båden mod land','Den er ikke farlig'],'Mange ulykker sker i fralandsvind.'],
+['nav','Hvad sker der, når vind og strøm går mod hinanden?',['Bølgerne bliver kortere og stejlere','Bølgerne forsvinder','Strømmen stopper','Vinden løjer af'],''],
+['nav','Hvorfor skal du tjekke vejrudsigten før afgang?',['Vind og bølger afgør, om turen er sikker, og hvornår du skal være hjemme','Det er kun nødvendigt om vinteren','For at vide, om det regner','Det er ikke nødvendigt med en hurtig båd'],'Vejret kan skifte hurtigt – kend udsigten for hele turen.'],
+
+// ---------- MANØVRER & KNOB ----------
+['man','Hvad bruges et pælestik til?',['At lave en fast løkke, der ikke strammer sig','At forlænge to liner','Som stopknob','At fastgøre til en klampe'],'Pælestik er den mest brugte løkke om bord.'],
+['man','Hvad bruges et ottetalsknob til?',['Stopknob i enden af en line','Fast løkke','At samle to liner','At fortøje til en pæl'],''],
+['man','Hvad bruges et dobbelt halvstik til?',['At fastgøre en line til en ring, pæl eller rælingsrør','At samle to liner','Som stopknob','Som løkke på en bøje'],'Gerne med en rundtørn først.'],
+['man','Hvordan lægger du en fortøjning korrekt på en klampe?',['En rundtørn om klampen, et par krydsslag og afslut med et halvt slag','Kun et par knuder oven på','Et pælestik om klampen','Vikle linen rundt ti gange'],''],
+['man','Hvad er et spring?',['En fortøjning, der forhindrer båden i at bevæge sig frem og tilbage langs kajen','En line til ankeret','Bådens kølvand','En hurtig acceleration'],'Spring bruges også aktivt til at komme fra kaj.'],
+['man','Hvordan lægger du bedst til kaj langskibs?',['Langsomt, i en lille vinkel og helst op mod vind eller strøm','Med fart, vinkelret på kajen','Altid med vinden bagfra','Baglæns med fuld gas'],'Vind/strøm imod giver bedre kontrol.'],
+['man','Vinden presser båden ind mod kajen. Hvordan kommer du lettest fra?',['Ved at gå fra på et spring, så den ene ende svinger ud','Ved at give fuld gas fremad','Ved at skubbe fra med hænderne','Det kan ikke lade sig gøre'],'Båden "hænger" i springet, og motoren drejer den ene ende fri af kajen.'],
+['man','Hvornår skal fenderne gøres klar?',['Inden anløbet, i højde med kajkanten/nabobåden','Når båden har ramt kajen','Kun i blæst','De skal ligge i stuverummet'],''],
+['man','Hvordan sejler du op til en fortøjningsbøje?',['Langsomt op mod vind eller strøm, med en gast klar med bådshage i stævnen','Med vinden bagfra og høj fart','Baglæns','Fra siden med fuld fart'],'Op mod vind/strøm kan du stoppe præcist.'],
+['man','Båden ligger ikke stille, da du skal fange bøjen. Hvad gør du?',['Sejler en runde og prøver igen – du forcerer det ikke','Tager gasten fat og holder fast med hænderne','Sætter fuld bak','Springer ud på bøjen'],'Ingen må risikere at blive trukket over bord.'],
+['man','Hvordan ankrer du korrekt?',['Sejl op mod vind/strøm, stop, fir ankeret til bunds og bak langsomt, mens linen gives ud','Kast ankeret ud i fuld fart','Kast ankeret fra agterenden i medvind','Smid ankeret, og sluk motoren straks'],'Bak forsigtigt for at sætte ankeret.'],
+['man','Hvor lang skal ankerkæden/-linen være ifølge kurset?',['Ca. 5 gange vanddybden','Samme længde som vanddybden','Altid 10 meter','Dobbelt bådens længde'],'Jo mere vandret trækket, jo bedre holder ankeret.'],
+['man','Hvordan kontrollerer du, at ankeret holder?',['Tag mærker/pejlinger i land og hold øje med, om de ændrer sig','Kig ned i vandet','Det holder altid','Lyt efter lyde fra kæden'],''],
+['man','Hvad skal du tage hensyn til ved valg af ankerplads?',['Svajeplads til andre både og grunde, vanddybde og bundforhold','Kun udsigten','Kun hvor tæt på land du kan komme','Hvor der er mest trafik'],'Båden svajer rundt om ankeret, når vinden skifter.'],
+['man','Hvorfor er en kædeforløber på ankeret en fordel?',['Vægten gør trækket mere vandret og øger holdekraften','Den gør ankeret lettere','Den forhindrer rust','Den er kun til pynt'],''],
+['man','Hvilken bund holder et fladanker (Danforth) godt i?',['Sand og mudder','Sten og klipper','Tæt tang','Det holder ingen steder'],''],
+['man','Hvad er vigtigt ved bugsering (slæb) af en anden båd?',['Fastgøre slæbelinen til solide punkter, passende længde, lav fart, kniv klar og ingen personer i linens retning','Bruge en kort line og høj fart','Holde linen i hånden','Bugsere baglæns'],'En line, der springer, kan ramme som en pisk.'],
+['man','Hvordan bugserer du bedst en båd inde i en havn?',['Side om side (langskibs), fortøjet tæt, med din båd lidt agten for den slæbte','På en lang line bagved','Ved at skubbe med stævnen','Det må man ikke'],'Side om side giver bedst kontrol på lidt plads.'],
+['man','Hvordan drejer du båden på meget lidt plads?',['Med lav fart og skiftevis korte tryk frem og bak','Med fuld fart og fuldt ror','Kun ved at bakke','Ved at slukke motoren'],'Små, kontrollerede gasgivninger.'],
+['man','Hvad bør du gøre inden afgang fra havn?',['Klargøre fortøjninger og fendere, briefe besætningen og stuve løse ting','Starte med fuld gas','Tage alle fendere ind først','Ingenting – bare sejle'],'Kommunikation med besætningen er en del af prøven.'],
+];
+
+// ================= BØJER (afmærkning) =================
+const R='#d32f2f',G='#2e7d32',K='#1a1a1a',Y='#f5c400',W='#ffffff',BU='#1565c0';
+const P=(on,off,c)=>[[on,c],[off,null]];
+const rep=(n,on,off,c)=>Array.from({length:n},()=>P(on,off,c)).flat();
+const T={
+ bagbord:{navn:'Rød sideafmærkning (bagbord)',kat:'Sideafmærkning',bands:[[R,1]],top:'cyl',tc:R,farve:'Rød',topTxt:'Rød cylinder',lys:'Rødt lys, vilkårlig rytme',pat:P(500,3500,'r'),bet:'Venstre side af løbet i afmærkningsretningen.',pass:'Holdes til BAGBORD, når du er for indadgående. Sejler du ud: til styrbord.',huske:'"Portvin er rød" – port = bagbord.'},
+ styrbord:{navn:'Grøn sideafmærkning (styrbord)',kat:'Sideafmærkning',bands:[[G,1]],top:'cone',tc:G,farve:'Grøn',topTxt:'Grøn kegle, spids op',lys:'Grønt lys, vilkårlig rytme',pat:P(500,3500,'g'),bet:'Højre side af løbet i afmærkningsretningen.',pass:'Holdes til STYRBORD, når du er for indadgående. Sejler du ud: til bagbord.',huske:'Grøn spids kegle = grantræ – til højre ind.'},
+ nord:{navn:'Nordbøje',kat:'Kompasafmærkning',bands:[[K,.5],[Y,.5]],top:'NN',tc:K,farve:'Sort over gul',topTxt:'To kegler, begge spids OP',lys:'Hvidt, hurtigt blink uden pause',pat:P(300,700,'w'),bet:'Sikkert vand NORD for bøjen.',pass:'Pas NORD om bøjen.',huske:'Begge spidser op. Sort ved den spidse side, gul ved den flade → sort øverst, gul nederst.'},
+ oest:{navn:'Østbøje',kat:'Kompasafmærkning',bands:[[K,.33],[Y,.34],[K,.33]],top:'OE',tc:K,farve:'Sort – gul – sort',topTxt:'To kegler, spidser VÆK fra hinanden',lys:'Hvidt: 3 hurtige blink + pause',pat:[...rep(3,300,700,'w'),[7000,null]],bet:'Sikkert vand ØST for bøjen.',pass:'Pas ØST om bøjen.',huske:'Spidserne peger væk fra hinanden → sort top og bund, gul i midten. Ligner et Æg → Øst.'},
+ syd:{navn:'Sydbøje',kat:'Kompasafmærkning',bands:[[Y,.5],[K,.5]],top:'SS',tc:K,farve:'Gul over sort',topTxt:'To kegler, begge spids NED',lys:'Hvidt: 6 hurtige + 1 langt blink + pause',pat:[...rep(6,300,700,'w'),[2000,'w'],[7000,null]],bet:'Sikkert vand SYD for bøjen.',pass:'Pas SYD om bøjen.',huske:'Begge spidser ned. Sort ved den spidse side → gul øverst, sort nederst.'},
+ vest:{navn:'Vestbøje',kat:'Kompasafmærkning',bands:[[Y,.33],[K,.34],[Y,.33]],top:'VV',tc:K,farve:'Gul – sort – gul',topTxt:'To kegler, spidser MOD hinanden',lys:'Hvidt: 9 hurtige blink + pause',pat:[...rep(9,300,700,'w'),[6000,null]],bet:'Sikkert vand VEST for bøjen.',pass:'Pas VEST om bøjen.',huske:'Flad øverst og flad nederst → gul top og bund, sort i midten. Vinglas → Vest.'},
+ isoleret:{navn:'Isoleret fareafmærkning',kat:'Øvrige',bands:[[K,.35],[R,.3],[K,.35]],top:'balls2',tc:K,farve:'Sort med rødt bånd',topTxt:'To sorte kugler',lys:'Hvidt: 2 blink i gruppe',pat:[[500,'w'],[1000,null],[500,'w'],[3000,null]],bet:'Markerer en isoleret hindring – fx en stor sten – med sejlbart vand rundt om.',pass:'Hold god afstand – faren ligger ved bøjen.',huske:'To sorte kugler, sort/rød. Fx en stor sten.'},
+ sikkert:{navn:'Midtfarvandsafmærkning',kat:'Øvrige',stripes:[R,W],top:'ball',tc:R,farve:'Rød/hvide LODRETTE striber',topTxt:'Én rød kugle',lys:'Hvidt: isofase (ISO) eller langt blink (LF)',pat:[[2000,'w'],[8000,null]],bet:'Markerer midten eller starten af en sejlrende.',pass:'Sejlbart vand rundt om – kan passeres på begge sider. Med eller uden topbetegnelse.',huske:'Eneste med rød/hvide lodrette striber og én rød kugle.'},
+ special:{navn:'Specialafmærkning',kat:'Øvrige',bands:[[Y,1]],top:'X',tc:Y,farve:'Gul',topTxt:'Gult kryds (X)',lys:'Gult lys',pat:P(500,4500,'y'),bet:'Område med restriktioner: fx skydeterræn, fredningsområder, arbejdsområder og forbudszoner.',pass:'Tjek søkortet for, hvad den markerer.',huske:'Gul + X = område med restriktioner.'},
+ nyfare:{navn:'Ny farekilde (nødvragafmærkning)',kat:'Øvrige',stripes:[BU,Y],top:'plus',tc:Y,farve:'Blå/gule LODRETTE striber',topTxt:'Gult opretstående kryds (+)',lys:'Skiftevis blåt og gult lys',pat:[[1000,'b'],[500,null],[1000,'y'],[500,null]],bet:'Ny fare, der endnu ikke er i søkortet, fx nyt vrag.',pass:'Hold god afstand.',huske:'Blå/gul = nyt og ukendt.'},
+ praef:{navn:'Skillepunkt – hovedløb til styrbord',kat:'Skillepunkt',bands:[[R,.37],[G,.26],[R,.37]],top:'cyl',tc:R,farve:'Rød med bredt grønt bånd',topTxt:'Rød cylinder',lys:'Rødt: blink i gruppe 2+1',pat:[[500,'r'],[500,null],[500,'r'],[1500,null],[500,'r'],[8500,null]],bet:'Løbet deler sig; hovedløbet fortsætter til styrbord.',pass:'Hold den om bagbord for at følge hovedløbet.',huske:'Grundfarven bestemmer: behandl den som en bagbordsbøje.'},
+ praefS:{navn:'Skillepunkt – hovedløb til bagbord',kat:'Skillepunkt',bands:[[G,.37],[R,.26],[G,.37]],top:'cone',tc:G,farve:'Grøn med bredt rødt bånd',topTxt:'Grøn kegle',lys:'Grønt: blink i gruppe 2+1',pat:[[500,'g'],[500,null],[500,'g'],[1500,null],[500,'g'],[8500,null]],bet:'Løbet deler sig; hovedløbet fortsætter til bagbord.',pass:'Hold den om styrbord for at følge hovedløbet.',huske:'Grundfarven bestemmer: behandl den som en styrbordsbøje.'}
+};
+const BK=Object.keys(T);
+const LCOL={r:'#ff3b30',g:'#34c759',w:'#fffbe8',y:'#ffd60a',b:'#2f7bff'};
+function topSVG(t,c){
+ const cone=(x,y,up)=>up?`<polygon points="${x},${y} ${x-11},${y+17} ${x+11},${y+17}" fill="${c}"/>`:`<polygon points="${x-11},${y} ${x+11},${y} ${x},${y+17}" fill="${c}"/>`;
+ return {cyl:`<rect x="50" y="28" width="20" height="22" fill="${c}"/>`,cone:cone(60,30,1),NN:cone(60,10,1)+cone(60,31,1),SS:cone(60,10,0)+cone(60,31,0),OE:cone(60,10,1)+cone(60,31,0),VV:cone(60,10,0)+cone(60,31,1),
+ balls2:`<circle cx="60" cy="18" r="8" fill="${c}"/><circle cx="60" cy="39" r="8" fill="${c}"/>`,ball:`<circle cx="60" cy="38" r="10" fill="${c}"/>`,
+ X:`<g stroke="${c}" stroke-width="5" stroke-linecap="round"><line x1="50" y1="28" x2="70" y2="48"/><line x1="70" y1="28" x2="50" y2="48"/></g>`,
+ plus:`<g stroke="${c}" stroke-width="5" stroke-linecap="round"><line x1="60" y1="24" x2="60" y2="50"/><line x1="48" y1="36" x2="72" y2="36"/></g>`}[t]||'';
+}
+let uid=0;
+function buoy(k,o={}){
+ const t=T[k],id='c'+(uid++),top=70,bot=165,h=bot-top;let fill='';
+ if(o.grey)fill=`<rect x="0" y="${top}" width="120" height="${h}" fill="#f1f5f9"/><text x="60" y="${top+h/2+14}" text-anchor="middle" font-size="40" font-weight="700" fill="#94a3b8">?</text>`;
+ else if(t.stripes){for(let i=0;i<6;i++)fill+=`<rect x="${30+i*10}" y="${top}" width="10.5" height="${h}" fill="${t.stripes[i%2]}"/>`}
+ else{let y=top;for(const[c,f]of t.bands){fill+=`<rect x="0" y="${y}" width="120" height="${h*f+.5}" fill="${c}"/>`;y+=h*f}}
+ return `<svg viewBox="0 0 120 200" width="${o.w||150}" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="${id}"><path d="M42 ${top} L78 ${top} L88 ${bot} L32 ${bot} Z"/></clipPath></defs>
+ <line x1="60" y1="${o.noTop?top:52}" x2="60" y2="${top}" stroke="#555" stroke-width="3"/>${o.noTop?'':topSVG(t.top,t.tc)}
+ <g clip-path="url(#${id})">${fill}</g><path d="M42 ${top} L78 ${top} L88 ${bot} L32 ${bot} Z" fill="none" stroke="${o.grey?'#94a3b8':'#0004'}" stroke-width="1.5" ${o.grey?'stroke-dasharray="5 4"':''}/>
+ <path d="M0 168 Q15 162 30 168 T60 168 T90 168 T120 168 V200 H0Z" fill="#4f86b8" opacity=".85"/><path d="M0 176 Q15 171 30 176 T60 176 T90 176 T120 176 V200 H0Z" fill="#2f6696"/></svg>`;
+}
+const CARD=['nord','oest','syd','vest'],RET={nord:'Nord',oest:'Øst',syd:'Syd',vest:'Vest'};
+const others=(k,n,pool=BK)=>shuf(pool.filter(x=>x!==k)).slice(0,n);
+const mk=(topic,q,correct,wrongs,e,extra={})=>{const o=shuf([correct,...wrongs]);return{topic,q,opts:o,ans:o.indexOf(correct),e,...extra}};
+const mkMulti=(topic,q,correct,wrongs,e,extra={})=>{const o=shuf([...correct,...wrongs]);return{topic,q,opts:o,ans:correct.map(c=>o.indexOf(c)).sort((a,b)=>a-b),multi:true,e,...extra}};
+const isOk=(q,a)=>q.multi?(Array.isArray(a)&&a.length===q.ans.length&&a.every(i=>q.ans.includes(i))):a===q.ans;
+const ansTxt=(q,a)=>a===null||a===undefined||(Array.isArray(a)&&!a.length)?'(ikke besvaret)':Array.isArray(a)?a.map(i=>q.opts[i]).join(' + '):q.opts[a];
+const BUOYGEN={
+ recog(){const k=pick(BK);return mk('afm','Hvilken afmærkning er dette?',T[k].navn,others(k,3).map(x=>T[x].navn),`${T[k].navn}: ${T[k].pass} 💡 ${T[k].huske}`,{img:buoy(k),bk:k})},
+ topmark(){const k=pick(BK.filter(x=>!x.startsWith('praef')));return mk('afm','Skroget er skjult (?) – du ser kun topbetegnelsen. Hvilken afmærkning er det?',T[k].navn,others(k,3,BK.filter(x=>!x.startsWith('praef'))).map(x=>T[x].navn),`Topbetegnelse: ${T[k].topTxt}. 💡 ${T[k].huske}`,{img:buoy(k,{grey:true}),bk:k})},
+ body(){const k=pick(BK);return mk('afm','Topbetegnelsen mangler. Hvilken afmærkning har denne farve?',T[k].navn,others(k,3).map(x=>T[x].navn),`${T[k].farve} = ${T[k].navn}.`,{img:buoy(k,{noTop:true}),bk:k})},
+ pass(){const k=pick(CARD);return mk('afm','Du nærmer dig denne bøje. Hvor er det sikkert at passere?','Pas '+RET[k].toLowerCase()+' om bøjen',CARD.filter(x=>x!==k).map(x=>'Pas '+RET[x].toLowerCase()+' om bøjen'),`Kardinaler hedder det, der er SIKKERT. 💡 ${T[k].huske}`,{img:buoy(k),bk:k})},
+ lateral(){const k=pick(['bagbord','styrbord']);const ind=Math.random()<.55;const bb=(k==='bagbord')===ind;
+  const A='Om bagbord (bøjen til venstre for båden)',B='Om styrbord (bøjen til højre for båden)';
+  return mk('afm',ind?'Du sejler IND mod havnen fra søen. Hvordan passerer du denne bøje?':'Du sejler UD af havnen mod åben sø. Hvordan passerer du denne bøje?',bb?A:B,[bb?B:A,'På begge sider','Hold god afstand – faren ligger ved bøjen'],T[k].pass,{img:buoy(k),bk:k})},
+ danger(){const k=pick(CARD),opp={nord:'Syd',syd:'Nord',oest:'Vest',vest:'Øst'};return mk('afm','Hvor ligger FAREN i forhold til denne bøje?',opp[k]+' for bøjen',Object.values(opp).filter(x=>x!==opp[k]).map(x=>x+' for bøjen'),`Bøjen hedder det sikre – faren er på modsatte side.`,{img:buoy(k),bk:k})},
+ light(){const k=pick(BK);return mk('afm',`<span class="small">(Ekstra – fyrkarakter er ikke pensum)</span><br>Om natten ser du: <em>${T[k].lys}</em>. Hvilken afmærkning er det?`,T[k].navn,others(k,3).map(x=>T[x].navn),`💡 ${T[k].huske}`,{bk:k})},
+ night(){const k=pick(BK);return mk('afm','<span class="small">(Ekstra – fyrkarakter er ikke pensum)</span><br>Se lyset blinke. Hvilken afmærkning er det?',T[k].navn,others(k,3).map(x=>T[x].navn),`${T[k].lys}. 💡 ${T[k].huske}`,{night:k,bk:k})}
+};
+const AFMFACTS=[
+ ['afm','Hvilket afmærkningssystem bruges i Danmark?',['IALA region A – rød om bagbord, når man sejler ind','IALA region B – rød om styrbord, når man sejler ind','Et særligt dansk system','Der er ikke noget fast system'],''],
+ ['afm','Hvad afgør, om en rød bøje holdes om bagbord eller styrbord?',['Afmærkningsretningen','Vindretningen','Strømmens retning','Tidspunktet på døgnet'],''],
+ ['afm','Hvordan går afmærkningsretningen ved en havn eller fjord?',['Fra søen og ind mod havnen/fjorden','Fra havnen og ud mod søen','Altid fra nord mod syd','Med strømmen'],''],
+ ['afm','Hvordan går den overordnede afmærkningsretning i danske farvande?',['Fra Skagerrak gennem Kattegat og bælterne/Øresund mod Østersøen','Fra Østersøen mod Nordsøen','Fra øst mod vest overalt','Den skifter med årstiden'],''],
+ ['afm','En kardinalafmærkning er opkaldt efter…',['Den side, hvor der er sikkert vand','Den side, hvor faren ligger','Den nærmeste havn','Den retning, du kommer fra'],''],
+ ['afmX','Hvordan husker man lysene på kardinalerne?',['Som en urskive: Øst 3, Syd 6 (+ langt), Vest 9, Nord konstant','Nord 1, Øst 2, Syd 3, Vest 4','De blinker alle ens','Antal blink = antal kegler'],''],
+ ['afm','Hvilken farve lys har kardinalafmærkninger?',['Hvidt','Gult','Rødt eller grønt','Blåt'],''],
+ ['afm','Du sejler UD af en havn. Hvor skal de grønne bøjer være?',['Om bagbord (til venstre)','Om styrbord (til højre)','Lige forude','Det er ligegyldigt'],'Ud af havnen = mod afmærkningsretningen = omvendt.'],
+ ['afm','En rød bøje har et bredt grønt bånd. Hvad betyder det?',['Løbet deler sig – hovedløbet fortsætter til styrbord, hvis du holder bøjen om bagbord','Ny farekilde','Sikkert vand','Specialafmærkning'],'Skillepunktsafmærkning: grundfarven bestemmer.'],
+];
+
+// ================= VIGESITUATIONER (diagram) =================
+function boatShape(x,y,hdg,col,kind,label){
+ let body=`<polygon points="0,-20 9,-5 9,16 -9,16 -9,-5" fill="${col}" stroke="#0006"/>`;
+ if(kind==='sail')body=`<polygon points="0,-20 8,-5 8,16 -8,16 -8,-5" fill="#fff" stroke="#333"/><polygon points="0,-14 0,10 14,6" fill="#f0f0f0" stroke="#333"/><line x1="0" y1="-16" x2="0" y2="12" stroke="#333" stroke-width="2"/>`;
+ if(kind==='fish')body=`<polygon points="0,-22 11,-6 11,18 -11,18 -11,-6" fill="#8d6e63" stroke="#0006"/><line x1="0" y1="18" x2="0" y2="46" stroke="#555" stroke-dasharray="3 3"/><path d="M-12 46 L12 46 L0 60Z" fill="none" stroke="#555"/>`;
+ return `<g transform="translate(${x},${y}) rotate(${hdg})"><line x1="0" y1="-22" x2="0" y2="-62" stroke="${col==='#fff'?'#333':col}" stroke-width="3" marker-end="url(#ar)"/>${body}</g>
+ <text x="${x}" y="${y+40}" text-anchor="middle" font-size="12" font-weight="600" fill="#0b1b2b">${label}</text>`;
+}
+function scene(other){ // own boat at 160,200 heading up
+ const rad=a=>a*Math.PI/180,ox=160+Math.sin(rad(other.brg))*other.d,oy=200-Math.cos(rad(other.brg))*other.d;
+ return `<svg viewBox="0 0 320 300" width="240" xmlns="http://www.w3.org/2000/svg" style="background:#cfe3f3;border-radius:12px">
+ <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8Z" fill="#333"/></marker></defs>
+ <text x="300" y="196" text-anchor="end" font-size="11" fill="#2e7d32" font-weight="600">styrbord →</text>
+ <text x="20" y="196" font-size="11" fill="#c62828" font-weight="600">← bagbord</text>
+ ${boatShape(160,215,0,'#1565c0','motor','DIG')}
+ ${boatShape(ox,oy,other.hdg,other.kind==='sail'?'#fff':other.kind==='fish'?'#8d6e63':'#e65100',other.kind,other.label)}
+ </svg>`;
+}
+const VA='Jeg har vigepligt og skal gå tydeligt af vejen',VB='Jeg skal holde kurs og fart (men være klar til at manøvrere)',VC='Begge skal dreje til styrbord',VD='Begge skal dreje til bagbord';
+const VIG=[
+ ()=>({o:{brg:55+Math.random()*25,d:120,hdg:250+Math.random()*20,kind:'motor',label:'Motorbåd'},a:VA,e:'Regel 15: Har du den anden på din styrbords side, viger du – helst ved at dreje til styrbord og gå agten om.'}),
+ ()=>({o:{brg:-(55+Math.random()*25),d:120,hdg:90+Math.random()*20,kind:'motor',label:'Motorbåd'},a:VB,e:'Regel 15/17: Den anden har dig på sin styrbords side og skal vige. Du holder kurs og fart – men handler, hvis den ikke viger.'}),
+ ()=>({o:{brg:0,d:130,hdg:180,kind:'motor',label:'Motorbåd'},a:VC,e:'Regel 14: Stævn mod stævn – begge drejer til styrbord.'}),
+ ()=>({o:{brg:2,d:95,hdg:0,kind:'motor',label:'Langsom motorbåd'},a:VA,q:'Du sejler hurtigere end båden foran og er ved at indhente den. Hvad gælder?',e:'Regel 13: Du overhaler – du viger, uanset bådtype.'}),
+ ()=>({o:{brg:175,d:80,hdg:0,kind:'motor',label:'Hurtig motorbåd'},a:VB,q:'En hurtigere båd indhenter dig bagfra. Hvad gælder for dig?',e:'Regel 13: Den overhalende viger. Du holder kurs og fart.'}),
+ ()=>({o:{brg:-(50+Math.random()*30),d:120,hdg:90,kind:'sail',label:'Sejlbåd (for sejl)'},a:VA,e:'Regel 18: Motorbåd viger for sejlbåd – også selvom den kommer fra din bagbords side.'}),
+ ()=>({o:{brg:-(45+Math.random()*30),d:115,hdg:95,kind:'fish',label:'Trawler (fisker)'},a:VA,e:'Regel 18: Motorbåd viger for et fiskende skib.'}),
+ ()=>({o:{brg:4,d:95,hdg:0,kind:'sail',label:'Sejlbåd (for sejl)'},a:VA,q:'Du indhenter en sejlbåd, der sejler for sejl. Hvad gælder?',e:'Regel 13 (overhaling) gælder over regel 18 – og her viger du alligevel, både fordi du overhaler og fordi du er maskindrevet.'}),
+];
+function vigQ(){const s=pick(VIG)();return mk('vig',s.q||'Hvad gælder i denne situation? (Blå båd = dig, pilene viser kursen)',s.a,[VA,VB,VC,VD].filter(x=>x!==s.a),s.e,{img:scene(s.o)})}
+
+
+// ===== Kompas-scenarie (som i kursets "Jeg kommer sejlende på nordlig kurs...") =====
+const HD={N:{n:'nordlig',a:0,dx:0,dy:-1},S:{n:'sydlig',a:180,dx:0,dy:1},E:{n:'østlig',a:90,dx:1,dy:0},W:{n:'vestlig',a:270,dx:-1,dy:0}};
+const CDIR={nord:[0,-1],oest:[1,0],syd:[0,1],vest:[-1,0]};
+function compassQ(H,KK){
+ const h=H||pick(['N','S','E','W']),d=HD[h];
+ const k=KK||((h==='N'||h==='S')?pick(['oest','vest']):pick(['nord','syd']));
+ const [sx,sy]=CDIR[k];
+ // cross product: is safe side to the right (styrbord) of heading?
+ const right=(d.dx*sy-d.dy*sx)>0;
+ const bx=150,by=140,ox=bx-d.dx*95,oy=by-d.dy*95,rx=bx-sx*55,ry=by-sy*55;
+ const b=buoy(k,{w:30}).replace('<svg ',`<svg x="${bx-15}" y="${by-42}" height="50" `);
+ const img=`<svg viewBox="0 0 300 280" width="240" xmlns="http://www.w3.org/2000/svg" style="background:#cfe3f3;border-radius:12px">
+ <defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8Z" fill="#333"/></marker></defs>
+ <g transform="translate(262,36)"><circle r="20" fill="#fff" stroke="#333"/><polygon points="0,-18 5,0 -5,0" fill="#c62828"/><polygon points="0,18 5,0 -5,0" fill="#333"/><text y="-23" text-anchor="middle" font-size="11" font-weight="700">N</text><text x="25" y="4" font-size="10">Ø</text><text x="-33" y="4" font-size="10">V</text><text y="32" text-anchor="middle" font-size="10">S</text></g>
+ <ellipse cx="${rx}" cy="${ry}" rx="22" ry="13" fill="#555"/><text x="${rx}" y="${ry+26}" text-anchor="middle" font-size="10">sten</text>
+ ${b}
+ <g transform="translate(${ox},${oy}) rotate(${d.a})"><line x1="0" y1="-22" x2="0" y2="-50" stroke="#1565c0" stroke-width="3" marker-end="url(#ar2)"/><polygon points="0,-20 9,-5 9,16 -9,16 -9,-5" fill="#1565c0"/></g>
+ <text x="${ox}" y="${oy+(d.dy>0?-28:34)}" text-anchor="middle" font-size="11" font-weight="600">DIG</text></svg>`;
+ return mk('afm',`Du sejler på <b>${d.n}</b> kurs og ser denne bøje ret forude. Skal du dreje til styrbord eller bagbord?`,
+  right?'Drej til styrbord':'Drej til bagbord',[right?'Drej til bagbord':'Drej til styrbord','Fortsæt ligeud – du kan passere på begge sider','Stop og læg dig for anker'],
+  `Det er en ${T[k].navn.toLowerCase()} – passér ${RET[k].toLowerCase()} for den. På ${d.n} kurs ligger ${RET[k].toLowerCase()} til ${right?'styrbord (højre)':'bagbord (venstre)'}.`,{img,bk:k});
+}
+
+
+// ===== Kursus-stil: "Hvad er dette, og hvordan skal den passeres?" =====
+const PASSTXT={bagbord:'en rød sideafmærkning, som holdes til bagbord, når man er for indadgående',styrbord:'en grøn sideafmærkning, som holdes til styrbord, når man er for indadgående',
+ nord:'en nordlig kompasafmærkning, som man skal være nord for',oest:'en østlig kompasafmærkning, som man skal være øst for',syd:'en sydlig kompasafmærkning, som man skal være syd for',vest:'en vestlig kompasafmærkning, som man skal være vest for',
+ isoleret:'en isoleret fareafmærkning, som der skal holdes afstand til',sikkert:'en midtfarvandsafmærkning, som kan passeres på begge sider',special:'en specialafmærkning, som markerer et område med restriktioner',nyfare:'en ny farekilde, som der skal holdes god afstand til'};
+const WRONGPASS=['en midtfarvandsafmærkning, som skal holdes på bagbord side','en isoleret fareafmærkning, som skal holdes til styrbord','en rød sideafmærkning, som holdes til styrbord, når man er for indadgående','en grøn sideafmærkning, som holdes til bagbord, når man er for indadgående'];
+const cap=t=>t[0].toUpperCase()+t.slice(1);
+function symbol(k){ // søkortssymbol-stil, som i kursets quiz
+ const t=T[k],id='s'+(uid++);let fill='';
+ if(t.stripes){for(let i=0;i<6;i++)fill+=`<rect x="${30+i*10}" y="40" width="10.5" height="120" fill="${t.stripes[i%2]}"/>`}
+ else{let y=60;for(const[c,f]of t.bands){fill+=`<rect x="0" y="${y}" width="120" height="${100*f+.5}" fill="${c}"/>`;y+=100*f}}
+ return `<svg viewBox="0 0 120 200" width="150" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="${id}"><path d="M30 165 L52 90 L56 62 L70 62 L72 120 L80 165Z"/></clipPath></defs>
+ <line x1="63" y1="46" x2="63" y2="64" stroke="#111" stroke-width="4"/><g transform="translate(6,0) skewX(-6)">${topSVG(t.top,t.tc).replace(/60,/g,'63,').replace(/x="50"/,'x="53"')}</g>
+ <g clip-path="url(#${id})">${fill}</g><path d="M30 165 L52 90 L56 62 L70 62 L72 120 L80 165Z" fill="none" stroke="#111" stroke-width="2"/>
+ <line x1="15" y1="165" x2="95" y2="165" stroke="#111" stroke-width="3"/><circle cx="55" cy="165" r="7" fill="#fff" stroke="#111" stroke-width="2"/></svg>`;
+}
+function comboQ(){const k=pick(Object.keys(PASSTXT));const c=PASSTXT[k];
+ const pool=shuf([...Object.keys(PASSTXT).filter(x=>x!==k).map(x=>PASSTXT[x]),...WRONGPASS]).filter(x=>x!==c).slice(0,3);
+ return mk('afm','Hvad er dette, og hvordan skal den passeres?',cap(c),pool.map(cap),`${T[k].navn}: ${T[k].pass} 💡 ${T[k].huske}`,{img:Math.random()<.6?symbol(k):buoy(k),bk:k})}
+
+
+// ===== Skibe om natten (lanterner) =====
+function nightScene(L){return `<svg viewBox="0 0 240 200" width="240" xmlns="http://www.w3.org/2000/svg" style="background:radial-gradient(#14233a,#03070d);border-radius:12px"><rect width="240" height="200" rx="12" fill="#06101d"/><rect y="150" width="240" height="50" fill="#020509"/>
+ ${L.map(([c,x,y])=>`<circle cx="${x}" cy="${y}" r="7" fill="${LCOL[c]}"/><circle cx="${x}" cy="${y}" r="16" fill="${LCOL[c]}" opacity=".25"/>`).join('')}</svg>`}
+const NIGHT=[
+ {L:[['w',120,50],['g',95,110],['r',145,110]],a:'Et maskindrevet skib, der kommer lige imod dig',e:'Hvid toplanterne + både grøn og rød = stævnen peger mod dig. Begge drejer til styrbord.'},
+ {L:[['w',110,55],['r',130,110]],a:'Et maskindrevet skib, hvis bagbords side du ser',e:'Rød = bagbord. Ser du den andens røde lanterne, skal du vige.'},
+ {L:[['w',130,55],['g',110,110]],a:'Et maskindrevet skib, hvis styrbords side du ser',e:'Grøn = styrbord. Ser du den andens grønne lanterne, kan du sejle (holde kurs og fart).'},
+ {L:[['g',100,110],['r',140,110]],a:'Et sejlskib under sejl, der kommer lige imod dig',e:'Sejlskibe under sejl har sidelanterner, men ingen hvid toplanterne.'},
+ {L:[['r',120,60],['r',120,100]],a:'Et manøvreudygtigt skib',e:'To røde rundtlys lodret over hinanden = manøvreudygtigt (svarer til to sorte kugler om dagen).'},
+ {L:[['r',120,45],['w',120,80],['r',120,115]],a:'Et skib, der er begrænset i sin manøvreevne',e:'Rød-hvid-rød lodret (om dagen kugle-ruder-kugle).'},
+ {L:[['g',120,65],['w',120,105]],a:'En trawler under fiskeri',e:'Grøn over hvid = trawler. Husk: "Grøn over hvid – trawler i tid".'},
+ {L:[['r',120,65],['w',120,105]],a:'Et fiskefartøj (ikke trawler) under fiskeri',e:'Rød over hvid = fiskeri med andet end trawl. Husk: "Rød over hvid – fiskeri med garn".'},
+];
+function nightQ(){const s=pick(NIGHT);const others=shuf(NIGHT.filter(x=>x!==s).map(x=>x.a)).slice(0,3);
+ return mk('svr','Det er nat, og du ser disse lys forude. Hvad ser du?',s.a,others,s.e,{img:nightScene(s.L)})}
+
+// ================= GENERATION =================
+const fromBank=b=>Array.isArray(b[2])?mk(b[0],b[1],b[2][0],b[2].slice(1),b[3],{kurs:b[4]==='K'}):mkMulti(b[0],b[1],b[2].c,b[2].w,b[3],{kurs:b[4]==='K'});
+const VIGRX=/vige|viger|vigepligt|overhal|indhent|kursholdende|stævn mod stævn|skærende kurs|vigerækkefølge|regel 1[2-8]|lanterne\. Hvad gælder|for anker\?|begrænset i sin manøvreevne/i;
+BANK.forEach(b=>{if(b[0]==='svr'&&(VIGRX.test(b[1])||VIGRX.test(b[3]||'')))b[0]='vig'});
+BANK.forEach(b=>{if(/tågesignal|Hvordan viser et fartøj/.test(b[1]))b[0]='svr'});
+const STATIC=[...BANK,...AFMFACTS].filter(b=>b[0]!=='afmX');
+function genTopic(topic,used,exam){
+ if(topic==='svr'&&Math.random()<.2)return nightQ();
+ if(topic==='vig'){const x=Math.random();if(x<.45)return vigQ()}
+ if(topic==='afm'&&Math.random()<.75){const y=Math.random();if(y<.2)return compassQ();if(y<.45)return comboQ();const ks=Object.keys(BUOYGEN).filter(k=>!exam||(k!=='light'&&k!=='night'));return BUOYGEN[pick(ks)]()}
+ let pool=STATIC.filter(b=>b[0]===topic&&!used.has(b[1]));if(exam==='kursus'&&Math.random()<.65){const kp=pool.filter(b=>b[4]==='K');if(kp.length)pool=kp}
+ const b=pick(pool.length?pool:STATIC.filter(b=>b[0]===topic));used.add(b[1]);return fromBank(b);
+}
+function weightedTopic(){const ks=Object.keys(TOPICS);const w=ks.map(k=>{const L=level(k);return L.acc==null?2.2:Math.max(.4,1+(100-L.acc)/12)});let r=Math.random()*w.reduce((a,b)=>a+b);for(let i=0;i<ks.length;i++){r-=w[i];if(r<=0)return ks[i]}return ks[0]}
+function buildExam(mode){const used=new Set(),qs=[],M=EXMODES[mode];for(const[t,n]of Object.entries(EXMODES[mode].mix))for(let i=0;i<n;i++){let q,tries=0;do{q=genTopic(t,used,mode==='kursus'?'kursus':true);tries++}while(tries<8&&qs.some(x=>x.q===q.q&&x.img===q.img));qs.push(q)}if(M.parts){const o=shuf(qs);return [...o.filter(q=>M.parts[0].topics.includes(q.topic)),...o.filter(q=>M.parts[1].topics.includes(q.topic))]}return shuf(qs)}
+
+// ================= STATS =================
+let stats={};try{stats=JSON.parse(localStorage.getItem('sbstats')||'{}')}catch(e){}
+let history=[];try{history=JSON.parse(localStorage.getItem('sbhist')||'[]')}catch(e){}
+function rec(q,ok){for(const k of [q.topic,q.bk?'b_'+q.bk:null].filter(Boolean)){const st=stats[k]=stats[k]||{r:0,f:0};ok?st.r++:st.f++;st.h=[...(st.h||[]),ok?1:0].slice(-20)}save()}
+// Niveau: kræver et minimum af svar, og vurderer på de SENESTE svar (ikke alle nogensinde)
+function level(k,need=10,win=10){const st=stats[k]||{r:0,f:0},n=st.r+st.f,h=(st.h||[]).slice(-win);
+ if(!n)return{n,txt:'Ikke øvet endnu',cls:'none',p:0,acc:null};
+ if(n<need)return{n,txt:`For få svar til en vurdering (${n}/${need})`,cls:'few',p:Math.round(n/need*100),acc:null};
+ if(h.length<win)return{n,txt:`Samler dine seneste svar (${h.length}/${win})`,cls:'few',p:Math.round(h.length/win*100),acc:null};
+ const acc=Math.round(h.reduce((a,b)=>a+b,0)/h.length*100);
+ return acc>=90?{n,acc,p:acc,cls:'ok',txt:`Sikker – ${h.filter(Boolean).length}/${h.length} af de seneste rigtige`}:acc>=75?{n,acc,p:acc,cls:'mid',txt:`Næsten – ${h.filter(Boolean).length}/${h.length} af de seneste rigtige`}:{n,acc,p:acc,cls:'bad',txt:`Øv mere – ${h.filter(Boolean).length}/${h.length} af de seneste rigtige`}}
+const LCLR={ok:'var(--ok)',mid:'var(--accent)',bad:'var(--bad)',few:'#9fb3c8',none:'#e3edf6'};
+const lvlBar=L=>`<div class="bar"><i style="width:${L.cls==='none'?0:L.p}%;background:${LCLR[L.cls]}"></i></div><span class="small">${L.txt}</span>`;
+function save(){try{localStorage.setItem('sbstats',JSON.stringify(stats));localStorage.setItem('sbhist',JSON.stringify(history))}catch(e){}}
+
+// ================= RENDER HELPERS =================
+const app=$('#app');let stopLight=null,timerId=null;
+function clearRun(){if(stopLight){stopLight();stopLight=null}if(timerId){clearInterval(timerId);timerId=null}}
+$('#nav').onclick=e=>{const b=e.target.closest('button');if(!b)return;go(b.dataset.v)};
+function go(v){if(examState&&!examState.done&&v!=='exam'){if(!confirmLeave(v))return}clearRun();document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x.dataset.v===v));({home,exam,train,buoys,cheat,flash,stats:statsView})[v]()}
+function confirmLeave(v){modal('Afbryd prøven?','Din igangværende prøveeksamen bliver ikke gemt.',[['Fortsæt prøven',()=>{}],['Afbryd',()=>{examState=null;go(v)},'warn']]);return false}
+function modal(title,text,btns){const m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="panel"><h3 style="margin-top:0">${title}</h3><p>${text}</p><div style="display:flex;gap:8px;justify-content:flex-end">${btns.map((b,i)=>`<button class="btn ${b[2]||'ghost'}" data-i="${i}">${b[0]}</button>`).join('')}</div></div>`;document.body.appendChild(m);m.querySelectorAll('button').forEach(b=>b.onclick=()=>{m.remove();btns[+b.dataset.i][1]()})}
+function playLight(pat){let alive=true,i=0;const lamp=$('#lamp');const step=()=>{if(!alive||!lamp||!lamp.isConnected)return;const[ms,c]=pat[i%pat.length];i++;if(c){lamp.style.background=LCOL[c];lamp.style.boxShadow=`0 0 30px 12px ${LCOL[c]}`}else{lamp.style.background='#000';lamp.style.boxShadow='none'}setTimeout(step,ms)};step();return()=>{alive=false}}
+function qHTML(q,sel){
+ const visual=q.night?`<div><div class="night"><div class="lamp" id="lamp"></div><div class="water"></div></div><button class="btn ghost" id="replay" style="margin-top:8px;width:100%">↻ Afspil lyset igen</button></div>`:q.img?`<div style="text-align:center">${q.img}</div>`:'';
+ return `<div class="q ${visual?'':'noimg'}">${visual}<div><div class="small" style="margin-bottom:6px">${TOPICS[q.topic].ikon} ${TOPICS[q.topic].navn}${q.kurs?' · <b style="color:#b45309">📘 Fra dit kursus</b>':''}</div><p class="qtext">${q.q}</p>${q.multi?'<div class="small" style="margin:-6px 0 10px;color:#b45309"><b>☑ Vælg gerne flere svar</b> – alle rigtige skal være krydset af</div>':''}<div class="opts">${q.opts.map((o,i)=>{const on=q.multi?(Array.isArray(sel)&&sel.includes(i)):sel===i;return `<button class="opt ${on?'sel':''}" data-i="${i}">${q.multi?`<span class="chk">${on?'☑':'☐'}</span> `:String.fromCharCode(65+i)+'. '}${o}</button>`}).join('')}</div>${q.multi?'<div style="margin-top:10px"><button class="btn" id="chk" style="display:none">Kontroller svar</button></div>':''}<div id="fb"></div></div></div>`;
+}
+function startNight(q){if(!q.night)return;const run=()=>{if(stopLight)stopLight();stopLight=playLight(T[q.night].pat)};run();const r=$('#replay');if(r)r.onclick=run}
+
+// ================= HOME =================
+function home(){
+ const last=history.slice(-5).reverse();
+ app.innerHTML=`<div class="panel"><h2 style="margin-top:0">Klar til speedbådsprøven?</h2>
+ <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:14px 0">
+ <div style="background:#eef5fb;border-radius:12px;padding:14px"><div class="small"><b>DEN RIGTIGE PRØVE</b></div><b style="font-size:17px">2 delprøver à 15 min · Del 1 max 2 fejl · Del 2 max 3 fejl</b><div class="small" style="margin-top:4px">Begge dele skal bestås hver for sig. Del 2 = søvejsregler (regel 5–10, 12–18) og afmærkning. Kilde: Dansk Sejlunions hjemmeside. Et andet DS-dokument nævner 31 spørgsmål og max 6 fejl – her trænes efter det strengeste.</div></div>
+ <div style="background:#fff7d6;border-radius:12px;padding:14px"><div class="small"><b>DIT TRÆNINGSMÅL (KURSETS KRAV)</b></div><b style="font-size:17px">38 spørgsmål · max 3 fejl · 0 fejl i vigeregler og bøjer</b><div class="small" style="margin-top:4px">Watergames' testeksamen. Strengere end den rigtige prøve – består du den, er du klar.</div></div></div>
+ <p class="small">Pensum følger Dansk Sejlunions prøvekrav: søvejsreglerne (regel 5–10 og 12–18), afmærkning, sikkerhed og nødprocedurer, båd og motor, søkort/GPS og vejr samt manøvrer.</p>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn" onclick="go('exam')">📝 Start prøveeksamen</button><button class="btn ghost" onclick="go('train')">🎯 Træn et emne</button><button class="btn ghost" onclick="go('cheat')">📋 Læs huskereglerne</button></div></div>
+ ${last.length?`<div class="panel"><h3 style="margin-top:0">Seneste prøver</h3><table>${last.map(h=>`<tr><td>${new Date(h.t).toLocaleString('da-DK',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td><td>${h.mode==='kursus'?'Kursus-test':h.mode==='del'?'Officiel (2 dele)':'Officiel'}</td><td>${h.r}/${h.n||31} rigtige</td><td>${h.f} fejl</td><td>${(h.pass??h.f<=6)?'<b style="color:var(--ok)">Bestået</b>':'<b style="color:var(--bad)">Ikke bestået</b>'}</td></tr>`).join('')}</table></div>`:''}
+ <div class="panel"><h3 style="margin-top:0">Sådan bruger du træneren</h3><ol style="line-height:1.7;margin:0;padding-left:20px;font-size:14px">
+ <li>Læs <b>Huskeregler</b> og gennemgå <b>Bøjer</b>.</li><li>Brug <b>Emnetræning</b> – du får forklaring efter hvert svar.</li><li>Tag <b>⭐ Kursets testeksamen</b>, indtil du består den 3 gange i træk – så er du også klar til den officielle.</li><li>Tjek <b>Statistik</b> – træningen giver dig automatisk flere spørgsmål i dine svage emner.</li></ol></div>`;
+}
+
+// ================= EXAM =================
+let examState=null;
+function exam(){
+ if(examState&&!examState.done)return renderExam();
+ app.innerHTML=`<h2 style="margin-top:0">📝 Prøveeksamen</h2><p class="small">Du kan gå frem og tilbage og markere spørgsmål. Svarene vises først, når du afleverer.</p><div class="topics">
+ ${Object.entries(EXMODES).map(([k,m])=>`<button class="topic" data-m="${k}" ${k==='kursus'?'style="border-color:var(--accent)"':''}><b>${k==='kursus'?'⭐ ':''}${m.navn}</b><span>${m.besk}<br>Tid: ${m.partMin?'2 × '+m.partMin:m.min} min.</span></button>`).join('')}</div>`;
+ app.querySelectorAll('.topic').forEach(b=>b.onclick=()=>{const m=b.dataset.m,M=EXMODES[m];examState={mode:m,qs:buildExam(m),ans:Array(M.n).fill(null),flag:Array(M.n).fill(false),i:0,part:0,t0:Date.now(),end:Date.now()+(M.partMin||M.min)*60000,done:false};renderExam()});
+}
+function renderExam(){
+ clearRun();const s=examState,q=s.qs[s.i],M=EXMODES[s.mode];
+ let lo=0,hi=s.qs.length-1;const bnd=M.parts?s.qs.findIndex(x=>!M.parts[0].topics.includes(x.topic)):-1;
+ if(M.parts){if(s.part)lo=bnd;else hi=bnd-1}
+ const nextPart=()=>{clearRun();s.part=1;s.i=bnd;s.end=Date.now()+M.partMin*60000;renderExam()};
+ const submitFn=M.parts&&!s.part?nextPart:finishExam;
+ app.innerHTML=`<div class="row"><span class="pill">${M.navn}${M.parts?' · <b>'+(s.part?'Del 2':'Del 1')+'</b>':''} · ${s.i-lo+1} / ${hi-lo+1}</span><span class="pill" id="answered">Besvaret: ${s.ans.slice(lo,hi+1).filter(a=>a!==null).length}/${hi-lo+1}</span><span class="pill timer" id="timer"></span></div>
+ <div class="qnav">${s.qs.map((_,i)=>i<lo||i>hi?'':`<button data-i="${i}" class="${s.ans[i]!==null?'ans':''} ${i===s.i?'cur':''} ${s.flag[i]?'flag':''}">${i-lo+1}</button>`).join('')}</div>
+ <div class="panel">${qHTML(q,s.ans[s.i])}</div>
+ <div class="row"><div style="display:flex;gap:8px"><button class="btn ghost" id="prev" ${s.i===lo?'disabled':''}>← Forrige</button><button class="btn ghost" id="flag">${s.flag[s.i]?'★ Fjern markering':'☆ Markér'}</button></div>
+ <div style="display:flex;gap:8px"><button class="btn ghost" id="next" ${s.i===hi?'disabled':''}>Næste →</button><button class="btn" id="submit">${M.parts&&!s.part?'Aflever del 1 →':'Aflever'}</button></div></div>`;
+ startNight(q);
+ app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;if(q.multi){let a=Array.isArray(s.ans[s.i])?[...s.ans[s.i]]:[];a=a.includes(i)?a.filter(x=>x!==i):[...a,i];s.ans[s.i]=a.length?a:null;b.classList.toggle('sel',a.includes(i));b.querySelector('.chk').textContent=a.includes(i)?'☑':'☐';if(!a.length){app.querySelector(`.qnav button[data-i="${s.i}"]`).classList.remove('ans');$('#answered').textContent=`Besvaret: ${s.ans.slice(lo,hi+1).filter(a=>a!==null).length}/${hi-lo+1}`;return}}else{s.ans[s.i]=i;app.querySelectorAll('.opt').forEach(x=>x.classList.toggle('sel',x===b))}
+  app.querySelector(`.qnav button[data-i="${s.i}"]`).classList.add('ans');$('#answered').textContent=`Besvaret: ${s.ans.slice(lo,hi+1).filter(a=>a!==null).length}/${hi-lo+1}`});
+ app.querySelectorAll('.qnav button').forEach(b=>b.onclick=()=>{s.i=+b.dataset.i;renderExam()});
+ $('#prev').onclick=()=>{s.i--;renderExam()};$('#next').onclick=()=>{s.i++;renderExam()};
+ $('#flag').onclick=()=>{s.flag[s.i]=!s.flag[s.i];renderExam()};
+ $('#submit').onclick=()=>{const un=s.ans.slice(lo,hi+1).filter(a=>a===null).length,fl=s.flag.slice(lo,hi+1).filter(Boolean).length;const p1=M.parts&&!s.part;
+  if(un||fl||p1)modal(p1?'Aflever del 1?':'Aflever prøven?',`${un?`Du mangler at svare på <b>${un}</b> spørgsmål – de tæller som fejl. `:''}${fl?`Du har <b>${fl}</b> markerede spørgsmål. `:''}${p1?'Du kan ikke vende tilbage til del 1. Del 2 starter med nye 15 minutter.':''}`,[['Tilbage',()=>{}],[p1?'Aflever og start del 2':'Aflever',submitFn,'warn']]);else submitFn()};
+ const tick=()=>{const left=Math.max(0,s.end-Date.now()),m=Math.floor(left/60000),sec=Math.floor(left%60000/1000);const el=$('#timer');if(el){el.textContent=`⏱ ${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;el.classList.toggle('low',left<180000)}if(left<=0)submitFn()};
+ tick();timerId=setInterval(tick,1000);
+}
+function finishExam(){
+ clearRun();const s=examState;if(!s||s.done)return;s.done=true;
+ const res=s.qs.map((q,i)=>({q,a:s.ans[i],ok:isOk(q,s.ans[i])}));res.forEach(r=>rec(r.q,r.ok));
+ const M=EXMODES[s.mode],N=s.qs.length,r=res.filter(x=>x.ok).length,f=N-r,zf={};M.zero.forEach(t=>zf[t]=res.filter(x=>x.q.topic===t&&!x.ok).length);
+ const pf=(M.parts||[]).map(p=>res.filter(x=>p.topics.includes(x.q.topic)&&!x.ok).length);
+ const zeroOk=Object.values(zf).every(v=>v===0)&&(M.parts||[]).every((p,i)=>pf[i]<=p.max),pass=f<=M.max&&zeroOk,used=Math.round((Date.now()-(s.t0||Date.now()))/60000);
+ history.push({t:Date.now(),r,f,n:N,mode:s.mode,pass});save();
+ const byT={};res.forEach(x=>{const t=x.q.topic;byT[t]=byT[t]||{r:0,n:0};byT[t].n++;if(x.ok)byT[t].r++});
+ app.innerHTML=`<div class="panel" style="text-align:center"><div class="big" style="color:${pass?'var(--ok)':'var(--bad)'}">${pass?'BESTÅET':'IKKE BESTÅET'}</div>
+ <p style="font-size:18px"><b>${r}/${N}</b> rigtige · ${Math.min(M.min,Math.max(0,used))} min brugt</p>
+ <div style="display:inline-block;text-align:left;font-size:15px;line-height:1.8;margin-bottom:12px">
+ ${M.parts?M.parts.map((p,i)=>`${pf[i]<=p.max?'✅':'❌'} ${p.navn}: <b>${pf[i]}</b> fejl (max ${p.max})`).join('<br>')+'<br>':`${f<=M.max?'✅':'❌'} Fejl i alt: <b>${f}</b> (max ${M.max})<br>`}
+ ${M.zero.map(t=>`${zf[t]===0?'✅':'❌'} Fejl i ${TOPICS[t].navn.toLowerCase()}: <b>${zf[t]}</b> (max 0)`).join('<br>')}</div><br>
+ <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn" id="again">Ny prøve</button><button class="btn ghost" id="trainweak">Træn mine fejl-emner</button></div></div>
+ <div class="panel"><h3 style="margin-top:0">Resultat pr. emne</h3><table>${Object.entries(byT).map(([t,v])=>{const p=Math.round(v.r/v.n*100);return`<tr><td>${TOPICS[t].ikon} ${TOPICS[t].navn}</td><td>${v.r}/${v.n}</td><td style="width:40%"><div class="bar"><i style="width:${p}%;background:${p>=80?'var(--ok)':p>=60?'var(--accent)':'var(--bad)'}"></i></div></td></tr>`}).join('')}</table></div>
+ <div class="panel"><div class="row"><h3 style="margin:0">Gennemgang</h3><label class="small"><input type="checkbox" id="onlyWrong" checked> Vis kun fejl</label></div><div id="rev"></div></div>`;
+ const draw=()=>{const only=$('#onlyWrong').checked;$('#rev').innerHTML=res.map((x,i)=>({x,i})).filter(o=>!only||!o.x.ok).map(({x,i})=>`<div class="review" style="padding:12px 0;border-bottom:1px solid var(--line)">
+  ${x.q.bk&&!x.q.night?buoy(x.q.bk,{w:70}):x.q.topic==='vig'&&x.q.img?x.q.img.replace('width="240"','width="120"'):''}
+  <div><div class="small">${i+1}. ${TOPICS[x.q.topic].navn}</div><b>${x.q.q.replace(/<[^>]+>/g,'')}</b><br>
+  ${x.ok?`<span style="color:var(--ok)">✔ ${ansTxt(x.q,x.q.ans)}</span>`:`<span style="color:var(--bad)">✘ Dit svar: ${ansTxt(x.q,x.a)}</span><br><span style="color:var(--ok)">✔ Rigtigt: ${ansTxt(x.q,x.q.ans)}</span>`}
+  ${x.q.e?`<div class="small" style="margin-top:4px">💡 ${x.q.e}</div>`:''}</div></div>`).join('')||'<p>Ingen fejl – flot! 🎉</p>'};
+ draw();$('#onlyWrong').onchange=draw;
+ $('#again').onclick=()=>{examState=null;exam()};
+ $('#trainweak').onclick=()=>{examState=null;trainTopic='svag';go('train')};
+}
+
+// ================= TRAIN =================
+let trainTopic=null,tc={n:0,r:0,streak:0};
+function train(){
+ if(!trainTopic){app.innerHTML=`<h2 style="margin-top:0">🎯 Emnetræning</h2><p class="small">Du får svar og forklaring med det samme efter hvert spørgsmål.</p><div class="topics">
+  <button class="topic" data-t="svag" style="border-color:var(--accent)"><b>⚡ Mine svage punkter</b><span>Blander emner – flest fra dem, du fejler i</span></button><button class="topic" data-t="kurs" style="border-color:#b45309"><b>📘 Kun kursets spørgsmål</b><span>${STATIC.filter(b=>b[4]==='K').length} spørgsmål fra dine Watergames-quizzer og testeksamen</span></button>
+  ${Object.entries(TOPICS).map(([k,t])=>{const p=level(k).txt;return`<button class="topic" data-t="${k}"><b>${t.ikon} ${t.navn}</b><span>${t.besk}<br><i>${p}</i></span></button>`}).join('')}</div>`;
+  app.querySelectorAll('.topic').forEach(b=>b.onclick=()=>{trainTopic=b.dataset.t;tc={n:0,r:0,streak:0};train()});return}
+ const used=new Set();
+ const next=()=>{clearRun();let q;if(trainTopic==='kurs'){const kp=STATIC.filter(b=>b[4]==='K'&&!used.has(b[1]));const b=pick(kp.length?kp:STATIC.filter(b=>b[4]==='K'));used.add(b[1]);q=fromBank(b)}else{const t=trainTopic==='svag'?weightedTopic():trainTopic;q=genTopic(t,used)}
+  app.innerHTML=`<div class="row"><button class="btn ghost" id="back">← Emner</button><span class="pill">${trainTopic==='svag'?'⚡ Svage punkter':trainTopic==='kurs'?'📘 Kursets spørgsmål':TOPICS[trainTopic].ikon+' '+TOPICS[trainTopic].navn}</span><span class="pill">Rigtige: ${tc.r}/${tc.n} · 🔥 ${tc.streak}</span></div><div class="panel">${qHTML(q)}<div style="text-align:right;margin-top:12px"><button class="btn" id="nx" style="display:none">Næste →</button></div></div>`;
+  startNight(q);$('#back').onclick=()=>{clearRun();trainTopic=null;train()};
+  const grade=a=>{const ok=isOk(q,a),A=[].concat(a),C=[].concat(q.ans);app.querySelectorAll('.opt').forEach(x=>{const j=+x.dataset.i;x.disabled=true;if(C.includes(j))x.classList.add('ok');else if(A.includes(j))x.classList.add('bad')});
+   rec(q,ok);tc.n++;if(ok){tc.r++;tc.streak++}else tc.streak=0;const ck=$('#chk');if(ck)ck.style.display='none';
+   const fb=$('#fb');fb.className='fb '+(ok?'ok':'bad');fb.innerHTML=(ok?'✅ <b>Rigtigt!</b> ':'❌ <b>Forkert.</b> Rigtigt svar: <b>'+ansTxt(q,q.ans)+'</b><br>')+(q.e?' '+q.e:'');
+   const n=$('#nx');n.style.display='inline-block';n.onclick=next;n.focus()};
+  let picked=[];
+  app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;if(!q.multi)return grade(i);picked=picked.includes(i)?picked.filter(x=>x!==i):[...picked,i];b.classList.toggle('sel',picked.includes(i));b.querySelector('.chk').textContent=picked.includes(i)?'☑':'☐';$('#chk').style.display=picked.length?'inline-block':'none'});
+  if(q.multi)$('#chk').onclick=()=>grade(picked)};
+ next();
+}
+
+// ================= BUOYS =================
+function buoys(){
+ app.innerHTML=`<div class="panel"><h3 style="margin-top:0">De 3 vigtigste ting</h3><div style="font-size:14px;line-height:1.6">
+ <b>1. Sideafmærkning:</b> For indadgående (nordfra ind i danske farvande, ind i fjorde og havne): <b>grøn til styrbord</b>, <b>rød til bagbord</b>. Ud: omvendt.<br>
+ <b>2. Kompasafmærkninger:</b> Nordbøjen passeres nord om – nord for nordbøjen! Farver: <b>sort ved den spidse side, gul ved den flade</b>.<br>
+ <b>3. Øvrige:</b> Isoleret fare = sort/rød, 2 kugler (fx stor sten) · Midtfarvand = rød/hvide lodrette striber, 1 rød kugle · Special = gul med X.<br><span class="small">Lysene (urskiven 3–6–9–12) er ikke pensum, men vises som ekstra.</span></div></div>
+ <div class="grid">${BK.map(k=>`<div class="card" data-k="${k}">${buoy(k,{w:100})}<div class="k">${T[k].kat}</div><div class="n">${T[k].navn}</div></div>`).join('')}</div><div id="det" style="margin-top:14px"></div>`;
+ app.querySelectorAll('.card').forEach(c=>c.onclick=()=>{clearRun();const k=c.dataset.k,t=T[k];$('#det').innerHTML=`<div class="panel q">${'<div style="text-align:center">'+buoy(k,{w:190})+`<div class="night" style="height:110px;margin-top:8px"><div class="lamp" id="lamp" style="top:40px"></div><div class="water" style="height:30px"></div></div><div class="small">Lyset om natten</div></div>`}<div><h2 style="margin:0 0 12px">${t.navn}</h2><dl><dt>Type</dt><dd>${t.kat}</dd><dt>Farve</dt><dd>${t.farve}</dd><dt>Topbetegnelse</dt><dd>${t.topTxt}</dd><dt>Lys</dt><dd>${t.lys}</dd><dt>Betydning</dt><dd>${t.bet}</dd><dt>Passér</dt><dd><b>${t.pass}</b></dd></dl><div class="tip">💡 ${t.huske}</div></div></div>`;stopLight=playLight(t.pat);$('#det').scrollIntoView({behavior:'smooth',block:'nearest'})});
+}
+
+// ================= CHEAT SHEET =================
+function cheat(){
+ app.innerHTML=`<div class="panel cheat"><h2 style="margin-top:0">📋 Huskeregler til prøven</h2>
+ <h3>⚖️ Vigeregler – rækkefølgen</h3><ul>
+ <li><b>Lanterne-huskeregel:</b> Ser du den andens <b>hvide</b> agterlanterne → vig. <b>Rød</b> → vig. <b>Grøn</b> → du kan sejle.</li><li><b>Vigerækkefølge:</b> indhentende → maskindrevet → sejlskib → fisker → begrænset i manøvreevne → for anker.</li><li><b>Tvivl?</b> Antag fare for sammenstød og at det er dig, der skal vige. Brug gentagne pejlinger. Vig bagom, tidligt og tydeligt – og vælg at vige for store erhvervsfartøjer.</li><li><b>Overhaling (regel 13) slår alt:</b> Den, der indhenter (ser agterlanternen, inden for 67,5°), viger – altid.</li>
+ <li><b>Stævn mod stævn (14):</b> Begge drejer til styrbord.</li>
+ <li><b>Skærende kurser (15):</b> Har du den anden om <b>styrbord</b>, viger du – gå agten om.</li>
+ <li><b>Kursholdende (17):</b> Hold kurs og fart – men handl, hvis den anden ikke viger. Drej ikke til bagbord for en båd på din bagbords side.</li>
+ <li><b>Ansvarsforhold (18) – motorbåd viger for:</b> manøvreudygtig, manøvrehæmmet, fiskende, sejlskib. (Huske: "Motoren viger for de svage".)</li>
+ <li><b>Snævert løb (9) / trafiksepareringssystem (10):</b> Hold til styrbord. Under 20 m må du ikke hindre store skibe. Kryds banerne vinkelret.</li></ul>
+ <h3>📢 Lydsignaler</h3><ul>
+ <li>1 kort = styrbord · 2 korte = bagbord · 3 korte = bakker · 5+ korte = tvivl/advarsel · 1 lang = sving/skjult område.</li>
+ <li>Kort ≈ 1 sek · lang = 4–6 sek.</li>
+ <li><b>Tåge:</b> Motor med fart: 1 lang hvert 2. min · stoppet: 2 lange · sejlskib: lang-kort-kort. Under 12 m: andet effektivt lydsignal.</li>
+ <li>Hører du tågesignal forude for tværs: ned i mindste styrefart.</li></ul>
+ <h3>💡 Lanterner & dagsignaler</h3><ul><li>Rød over rød = manøvreudygtig (2 sorte kugler) · rød-hvid-rød = begrænset manøvreevne (kugle-rude-kugle) · grøn over hvid = trawler · rød over hvid = andet fiskeri (2 kegler spids mod spids) · sejlskib under sejl: kun sidelanterner + hæk.</li><li>Kodeflag A = dykker nede · N over C = nød.</li><li>Rød bagbord · grøn styrbord (112,5°) · hvid hæk (135°) · hvid top (225°).</li>
+ <li>Motorbåd under 12 m: må vise hvidt rundtlys + sidelanterner.</li><li>Ser du kun hvidt hæklys: du er overhalende. Rød + grøn: den kommer lige imod dig.</li><li>For anker: hvidt rundtlys / sort kugle om dagen.</li></ul>
+ <h3>🛟 Afmærkning</h3><ul><li><b>For indadgående</b> (ind i danske farvande nordfra, ind i fjorde og havne – pil i søkortet): grøn til styrbord, rød til bagbord.</li><li><b>Kompasafmærkninger:</b> Nordbøjen passeres nord om – nord for nordbøjen! Farver: <b>sort ved den spidse side, gul ved den flade</b>.</li><li>Lys som urskive (3–6–9–12) – men fyrkarakteren er ikke pensum.</li>
+ <li>Isoleret fare (fx stor sten): sort/rød, 2 sorte kugler. Midtfarvand: røde/hvide lodrette striber, 1 rød kugle – midten/starten af en sejlrende. Special: gul med X – restriktionsområde. Ny fare: blå/gul, gult +.</li></ul>
+ <h3>🆘 Nød</h3><ul><li><b>MAYDAY</b> = overhængende livsfare · <b>PAN PAN</b> = haster · <b>SECURITE</b> = sikkerhedsadvarsel.</li>
+ <li>VHF kanal 16 (tale) · DSC kanal 70 (rød knap: MMSI + position) · telefon 112.</li>
+ <li>MAYDAY-melding: MAYDAY ×3, her er [navn] ×3 → position, hvad er sket, hjælp, antal personer, OVER.</li>
+ <li><b>MOB:</b> Råb, kast krans, én peger, MOB-knap, drej mod den side personen faldt ud, frigear/stop tæt på personen. 1-10-1-reglen. Bjærg vandret.</li>
+ <li><b>Brand:</b> Brandtrekant (brændstof, ilt, varme). Benzindampe synker – ventilér før start. Aldrig vand på benzinbrand.</li></ul>
+ <h3>⚙️ Båd & motor</h3><ul><li>Dyb V: blød i bølger. Flad bund: hurtig, hård i bølger.</li><li>Kontrolstråle mangler → stop motoren. Motoren dør efter få min → tankudluftning lukket.</li>
+ <li>Start i frigear med nødstopline på. Trim ind = stævn ned (planing, modsø). For meget trim ud = delfinspring. Sænk flappen i den side, der hænger.</li>
+ <li>Du er ansvarlig for din hækbølge.</li></ul>
+ <h3>📘 Fra dit kursus – let at glemme</h3><ul><li><b>300-meter-reglen:</b> inden for 300 m fra kysten kun direkte til/fra land, max 5 knob (ikke plane). Havne typisk 3 knob, fjorde ofte 5 knob.</li><li><b>Brændstof:</b> planlagt forbrug + 50 % om sommeren, + 100 % om vinteren. Eksempel: 30 sm, 12 kn, 10 L/t → 25 L × 1,5 = 37,5 L. Mål forbruget: fyld op, sejl, fyld op igen. Bølger/modvind = langt højere forbrug.</li><li><b>Promille 0,5 · alder 16 år</b> (prøve fra 15) · kun frisk fiskeaffald i havet.</li><li><b>CE:</b> A alle farvande · B åbent farvand (Kattegat) · C kystnært (Øresund) · D beskyttet (fjorde/søer). Max personer = CE, dog højst antal redningsveste.</li><li><b>Obligatorisk:</b> godkendt redningsvest i rigtig størrelse til hver person (ikke krav at have den på). Redningsvest vender en bevidstløs – svømmevest gør ikke.</li><li><b>Nød</b> = rødt blus/raket, orange røg, N over C, MAYDAY, SOS, flammer, uafbrudt horn, hæve/sænke begge arme. <b>Ikke nød</b> = grønt blus, hvid røg/raket, én arm (opmærksomhed).</li><li><b>Hypotermi:</b> varm langsomt op indefra – tæpper, varm drik. Ingen massage, ingen alkohol.</li><li><b>Anker:</b> ca. 5 × dybden, læ, god holdebund, sæt ankeret i bak. <b>MOB:</b> motor ikke i gang/gear inden for 2 bådlængder.</li><li><b>Flag:</b> A = dykker (min. 50 m) · L = stop. <b>Båker:</b> to båker over hinanden = du er i båkelinjen.</li></ul><h3>🗺️ Navigation</h3><ul><li>1 sømil = 1852 m = 1 bueminut på breddeskalaen. Knob = sømil/time.</li><li>Tid = distance / fart (fx 12 sm / 24 kn = 30 min).</li><li>GPS kan svigte – hav backup. Vejr fra DMI i m/s. Kulingsvarsel fra 14 m/s. Pas på fralandsvind.</li></ul>
+ <h3>⚓ Manøvrer</h3><ul><li>Anløb og bøje: langsomt, op mod vind/strøm. Ankerline 3–5 × dybden. Spring styrer båden langs kajen og bruges til afgang.</li>
+ <li>Knob: pælestik (fast løkke), ottetal (stopknob), dobbelt halvstik (ring/pæl), klampe: rundtørn + krydsslag + halvt slag.</li></ul></div>`;
+}
+
+// ================= STATS =================
+function statsView(){
+ const rowsT=Object.entries(TOPICS).map(([k,t])=>{const L=level(k);return`<tr><td>${t.ikon} ${t.navn}${['vig','afm'].includes(k)?' <span class="small" style="color:#b45309">(0 fejl-krav)</span>':''}</td><td>${L.n}</td><td style="width:50%">${lvlBar(L)}</td></tr>`}).join('');
+ const rowsB=BK.map(k=>({k,L:level('b_'+k,5,8)})).sort((a,b)=>(a.L.acc??(a.L.n?95:200))-(b.L.acc??(b.L.n?95:200))).map(x=>`<tr><td>${buoy(x.k,{w:34})}</td><td>${T[x.k].navn}</td><td>${x.L.n}</td><td style="width:45%">${lvlBar(x.L)}</td></tr>`).join('');
+ const kt=history.filter(h=>h.mode==='kursus'),last3=kt.slice(-3),passed=history.filter(h=>h.pass??h.f<=6).length;
+ const allTopics=Object.keys(TOPICS).every(k=>['ok','mid'].includes(level(k).cls)),zeroT=['vig','afm'].every(k=>level(k).cls==='ok'),three=last3.length===3&&last3.every(h=>h.pass);
+ const chk=(ok,t)=>`<div style="padding:4px 0">${ok?'✅':'⬜'} ${t}</div>`;
+ app.innerHTML=`<div class="panel"><h2 style="margin-top:0">📊 Er du klar til prøven?</h2>
+ ${chk(allTopics,'Alle emner mindst "Næsten" (≥75 % af de seneste 10 svar, mindst 10 svar pr. emne)')}
+ ${chk(zeroT,'Vigeregler og afmærkning "Sikker" (≥90 % af de seneste 10) – her må du ikke fejle i kursets test')}
+ ${chk(three,`Bestået kursets testeksamen 3 gange i træk (${last3.map(h=>h.pass?'✅':'❌').join(' ')||'ingen endnu'})`)}
+ <p style="margin:10px 0 0;font-weight:600">${allTopics&&zeroT&&three?'🎉 Du er klar!':'Ikke helt endnu – fortsæt træningen.'}</p></div>
+ <div class="panel"><h3 style="margin-top:0">Prøveeksamener</h3><p style="margin:0">I alt: <b>${history.length}</b> · Bestået: <b>${passed}</b>${history.length?` · Gns. fejl: <b>${(history.reduce((a,h)=>a+h.f,0)/history.length).toFixed(1)}</b>`:''}</p></div>
+ <div class="panel"><h3 style="margin-top:0">Emner</h3><p class="small" style="margin-top:0">Vurderingen bygger på dine <b>seneste 10 svar</b> pr. emne og kræver mindst 10 svar – så ét heldigt svar giver ikke 100 %.</p>
+ <table><tr><th>Emne</th><th>Svar i alt</th><th>Niveau</th></tr>${rowsT}</table></div>
+ <div class="panel"><h3 style="margin-top:0">Bøjer (svageste øverst)</h3><p class="small" style="margin-top:0">Pr. bøje: seneste 8 svar, mindst 5 svar før vurdering.</p><table>${rowsB}</table></div>
+ <div style="display:flex;gap:8px"><button class="btn" id="drill">⚡ Træn svage punkter</button><button class="btn ghost" id="reset">Nulstil statistik</button></div>
+ <p class="small">Gemmes kun i denne browser.</p>`;
+ $('#drill').onclick=()=>{trainTopic='svag';tc={n:0,r:0,streak:0};go('train')};
+ $('#reset').onclick=()=>modal('Nulstil statistik?','Alle dine resultater slettes.',[['Annullér',()=>{}],['Nulstil',()=>{stats={};history=[];save();statsView()},'warn']]);
+}
+// ================= FLASHCARDS =================
+function buildCards(){
+ const cards=[];const add=(q,extra='')=>cards.push({...q,ans:[].concat(q.ans),extra});
+ for(const k of BK){const t=T[k];add(mk('afm','Hvad er dette, og hvordan skal den passeres?',t.navn,others(k,3).map(x=>T[x].navn),'',{img:buoy(k,{w:130})}),`<b>Passage:</b> ${t.pass}<br><b>Farve:</b> ${t.farve} · <b>Top:</b> ${t.topTxt}<br>💡 ${t.huske}`)}
+ for(const k of BK.filter(x=>!x.startsWith('praef')))add(mk('afm','Skroget er skjult – hvilken afmærkning har denne topbetegnelse?',T[k].navn,others(k,3,BK.filter(x=>!x.startsWith('praef'))).map(x=>T[x].navn),T[k].topTxt,{img:buoy(k,{w:130,grey:true})}));
+ for(const [h,k] of [['N','oest'],['N','vest'],['S','oest'],['S','vest'],['E','nord'],['E','syd'],['W','nord'],['W','syd']])add(compassQ(h,k));
+ VIG.forEach(f=>{const sc=f();add(mk('vig',sc.q||'Hvad gælder i denne situation? (Blå båd = dig)',sc.a,[VA,VB,VC,VD].filter(x=>x!==sc.a),sc.e,{img:scene(sc.o)}))});
+ NIGHT.forEach(n=>add(mk('svr','Det er nat, og du ser disse lys forude. Hvad ser du?',n.a,shuf(NIGHT.filter(x=>x!==n).map(x=>x.a)).slice(0,3),n.e,{img:nightScene(n.L)})));
+ const seen=new Set();for(const b of STATIC){if(seen.has(b[1]))continue;seen.add(b[1]);add(fromBank(b))}
+ return cards;
+}
+let fcState=null;let fcKnown={};try{fcKnown=JSON.parse(localStorage.getItem('sbfc')||'{}')}catch(e){}
+const fcKey=c=>c.topic+'|'+c.q.replace(/<[^>]+>/g,'')+'|'+(c.img?c.img.length:0)+'|'+c.opts.slice().sort().join('/').length;
+function fcSave(){try{localStorage.setItem('sbfc',JSON.stringify(fcKnown))}catch(e){}}
+function flash(){
+ if(fcState&&fcState.deck.length)return fcRender();
+ const all=buildCards();
+ const sets=[
+  ['eks','⭐ Eksamensudgave','Alle bøjer + vigeregler + kursets egne spørgsmål',c=>c.topic==='afm'||c.topic==='vig'||c.kurs],
+  ['zero','🛟🧭 Kun bøjer og vigeregler','De to emner, du ikke må fejle i',c=>c.topic==='afm'||c.topic==='vig'],
+  ['weak','🔁 Mine "øv igen"-kort','Kort, du har markeret som "øv igen"',c=>fcKnown[fcKey(c)]===0],
+  ['all','🃏 Alle kort','Hele bunken',c=>true],
+  ...Object.entries(TOPICS).map(([k,t])=>[k,t.ikon+' '+t.navn,'',c=>c.topic===k])];
+ app.innerHTML=`<h2 style="margin-top:0">🃏 Flashcards</h2><p class="small">Tryk på kortet for at vende det. Marker "Kunne den" eller "Øv igen" – kort du ikke kunne, kommer igen senere i bunken.</p><div class="topics">
+ ${sets.map(([k,n,d,f])=>{const cs=all.filter(f);const kn=cs.filter(c=>fcKnown[fcKey(c)]===1).length;return `<button class="topic" data-s="${k}" ${k==='eks'?'style="border-color:var(--accent)"':''} ${cs.length?'':'disabled style="opacity:.5"'}><b>${n}</b><span>${d?d+'<br>':''}${cs.length} kort${cs.length?` · ${kn} kan du`:''}</span></button>`}).join('')}</div>
+ <p class="small" style="margin-top:14px"><button class="btn ghost" id="fcreset">Nulstil "kan/øv igen"</button></p>`;
+ app.querySelectorAll('.topic[data-s]').forEach(b=>b.onclick=()=>{const st=sets.find(x=>x[0]===b.dataset.s);const deck=shuf(all.filter(st[3]));if(!deck.length)return;fcState={name:st[1],deck,i:0,done:0,total:deck.length,known:0};fcRender()});
+ $('#fcreset').onclick=()=>modal('Nulstil flashcards?','Alle markeringer "kunne / øv igen" slettes.',[['Annullér',()=>{}],['Nulstil',()=>{fcKnown={};fcSave();flash()},'warn']]);
+}
+function fcRender(){
+ const s=fcState;if(!s.deck.length){app.innerHTML=`<div class="panel" style="text-align:center"><div class="big" style="color:var(--ok)">🎉 Færdig!</div><p>Du har været hele bunken igennem: <b>${s.known}</b> af ${s.total} kunne du i første forsøg.</p><button class="btn" id="fcback">Vælg ny bunke</button></div>`;$('#fcback').onclick=()=>{fcState=null;flash()};return}
+ const c=s.deck[0];const L=i=>c.multi?'☑':String.fromCharCode(65+i)+'.';
+ app.innerHTML=`<div class="row"><button class="btn ghost" id="fcx">← Bunker</button><span class="pill">${s.name}</span><span class="pill">${s.done}/${s.total} · ${s.deck.length} tilbage</span></div>
+ <div class="bar" style="max-width:640px;margin:0 auto 12px"><i style="width:${s.done/s.total*100}%;background:var(--sea)"></i></div>
+ <div class="fc-wrap"><div class="fc" id="fc">
+  <div class="fc-face"><div class="small" style="margin-bottom:6px">${TOPICS[c.topic].ikon} ${TOPICS[c.topic].navn}${c.kurs?' · <b style="color:#b45309">📘 Kursus</b>':''}</div>${c.img?`<div class="fc-img">${c.img}</div>`:''}<p class="qtext">${c.q}</p>${c.multi?'<div class="small" style="color:#b45309;font-weight:700">☑ Vælg gerne flere</div>':''}${c.opts.map((o,i)=>`<div class="fc-o">${c.multi?'☐':String.fromCharCode(65+i)+'.'} ${o}</div>`).join('')}<div class="fc-hint">Tryk for at se svaret</div></div>
+  <div class="fc-face fc-back"><div class="small">Svar</div><div class="fc-ans">${c.ans.map(i=>`<span>${L(i)} ${c.opts[i]}</span>`).join('')}</div>${c.e?`<div style="font-size:14px;line-height:1.5">${c.e}</div>`:''}${c.extra?`<div style="font-size:14px;line-height:1.5;margin-top:8px">${c.extra}</div>`:''}</div>
+ </div></div>
+ <div class="fc-btns"><button class="btn warn" id="fcno">🔁 Øv igen</button><button class="btn" id="fcyes" style="background:var(--ok)">✅ Kunne den</button></div>`;
+ const fc=$('#fc');const fit=()=>{const f=fc.querySelectorAll('.fc-face');fc.style.minHeight=Math.max(380,...[...f].map(x=>x.scrollHeight))+'px'};fit();
+ fc.onclick=()=>fc.classList.toggle('flip');
+ $('#fcx').onclick=()=>{fcState=null;flash()};
+ $('#fcyes').onclick=()=>{fcKnown[fcKey(c)]=1;fcSave();if(!c._again)s.known++;s.deck.shift();s.done++;fcRender()};
+ $('#fcno').onclick=()=>{fcKnown[fcKey(c)]=0;fcSave();c._again=true;s.deck.shift();s.deck.splice(Math.min(s.deck.length,4+Math.floor(Math.random()*4)),0,c);fcRender()};
+}
+
+home();
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+</script>
+</body>
+</html>
