@@ -788,19 +788,23 @@ function flash(){
  if(fcState&&fcState.deck.length)return fcRender();
  const all=buildCards();
  const sets=[
-  ['eks','⭐ Eksamensudgave','Alle bøjer + vigeregler + kursets egne spørgsmål',c=>c.topic==='afm'||c.topic==='vig'||c.kurs],
+  ['xk','⭐ Kursets testeksamen','Som en prøve: 38 kort trukket på ny hver gang – max 3 fejl, 0 i vigeregler og bøjer',c=>false,()=>buildExam('kursus'),38],
+  ['xo','📝 Den rigtige prøve','Som en prøve: 31 kort trukket på ny hver gang (Del 1 + Del 2)',c=>false,()=>buildExam('officiel'),31],
+  ['eks','📚 Eksamensudgave – hele bunken','Alle bøjer + vigeregler + kursets egne spørgsmål',c=>c.topic==='afm'||c.topic==='vig'||c.kurs],
   ['zero','🛟🧭 Kun bøjer og vigeregler','De to emner, du ikke må fejle i',c=>c.topic==='afm'||c.topic==='vig'],
   ['weak','🔁 Mine "øv igen"-kort','Kort, du har markeret som "øv igen"',c=>fcKnown[fcKey(c)]===0],
   ['all','🃏 Alle kort','Hele bunken',c=>true],
   ...Object.entries(TOPICS).map(([k,t])=>[k,t.ikon+' '+t.navn,'',c=>c.topic===k])];
  app.innerHTML=`<h2 style="margin-top:0">🃏 Flashcards</h2><p class="small">Tryk på kortet for at vende det. Marker "Kunne den" eller "Øv igen" – kort du ikke kunne, kommer igen senere i bunken.</p><div class="topics">
- ${sets.map(([k,n,d,f])=>{const cs=all.filter(f);const kn=cs.filter(c=>fcKnown[fcKey(c)]===1).length;return `<button class="topic" data-s="${k}" ${k==='eks'?'style="border-color:var(--accent)"':''} ${cs.length?'':'disabled style="opacity:.5"'}><b>${n}</b><span>${d?d+'<br>':''}${cs.length} kort${cs.length?` · ${kn} kan du`:''}</span></button>`}).join('')}</div>
+ ${sets.map(([k,n,d,f,gen,cnt])=>{if(gen)return `<button class="topic" data-s="${k}" style="border-color:var(--accent)"><b>${n}</b><span>${d}</span></button>`;const cs=all.filter(f);const kn=cs.filter(c=>fcKnown[fcKey(c)]===1).length;return `<button class="topic" data-s="${k}" ${cs.length?'':'disabled style="opacity:.5"'}><b>${n}</b><span>${d?d+'<br>':''}${cs.length} kort${cs.length?` · ${kn} kan du`:''}</span></button>`}).join('')}</div>
  <p class="small" style="margin-top:14px"><button class="btn ghost" id="fcreset">Nulstil "kan/øv igen"</button></p>`;
- app.querySelectorAll('.topic[data-s]').forEach(b=>b.onclick=()=>{const st=sets.find(x=>x[0]===b.dataset.s);const deck=shuf(all.filter(st[3]));if(!deck.length)return;fcState={name:st[1],deck,i:0,done:0,total:deck.length,known:0};fcRender()});
+ app.querySelectorAll('.topic[data-s]').forEach(b=>b.onclick=()=>{const st=sets.find(x=>x[0]===b.dataset.s);const deck=st[4]?st[4]().map(q=>({...q,ans:[].concat(q.ans),extra:''})):shuf(all.filter(st[3]));if(!deck.length)return;fcState={name:st[1],deck,i:0,done:0,total:deck.length,known:0,exam:st[4]?st[0]:null,wrong:[]};fcRender()});
  $('#fcreset').onclick=()=>modal('Nulstil flashcards?','Alle markeringer "kunne / øv igen" slettes.',[['Annullér',()=>{}],['Nulstil',()=>{fcKnown={};fcSave();flash()},'warn']]);
 }
 function fcRender(){
- const s=fcState;if(!s.deck.length){app.innerHTML=`<div class="panel" style="text-align:center"><div class="big" style="color:var(--ok)">🎉 Færdig!</div><p>Du har været hele bunken igennem: <b>${s.known}</b> af ${s.total} kunne du i første forsøg.</p><button class="btn" id="fcback">Vælg ny bunke</button></div>`;$('#fcback').onclick=()=>{fcState=null;flash()};return}
+ const s=fcState;if(!s.deck.length){let verdict='';if(s.exam==='xk'){const f=s.wrong.length,z=s.wrong.filter(c=>c.topic==='vig'||c.topic==='afm').length,ok=f<=3&&z===0;verdict=`<p style="font-size:18px;font-weight:700;color:${ok?'var(--ok)':'var(--bad)'}">${ok?'Bestået':'Ikke bestået'}: ${f} fejl (max 3) · ${z} i vigeregler/bøjer (max 0)</p>`}
+ if(s.exam==='xo'){const P=EXMODES.officiel.parts,f1=s.wrong.filter(c=>P[0].topics.includes(c.topic)).length,f2=s.wrong.length-f1,ok=f1<=2&&f2<=3;verdict=`<p style="font-size:18px;font-weight:700;color:${ok?'var(--ok)':'var(--bad)'}">${ok?'Bestået':'Ikke bestået'}: Del 1 ${f1} fejl (max 2) · Del 2 ${f2} fejl (max 3)</p>`}
+ app.innerHTML=`<div class="panel" style="text-align:center"><div class="big" style="color:var(--ok)">🎉 Færdig!</div>${verdict}<p><b>${s.known}</b> af ${s.total} kunne du i første forsøg.</p>${s.exam?'<p class="small">Vær ærlig med "Kunne den" – det tæller som rigtigt.</p>':''}<button class="btn" id="fcback">Vælg ny bunke</button></div>`;$('#fcback').onclick=()=>{fcState=null;flash()};return}
  const c=s.deck[0];const L=i=>c.multi?'☑':String.fromCharCode(65+i)+'.';
  app.innerHTML=`<div class="row"><button class="btn ghost" id="fcx">← Bunker</button><span class="pill">${s.name}</span><span class="pill">${s.done}/${s.total} · ${s.deck.length} tilbage</span></div>
  <div class="bar" style="max-width:640px;margin:0 auto 12px"><i style="width:${s.done/s.total*100}%;background:var(--sea)"></i></div>
@@ -813,7 +817,7 @@ function fcRender(){
  fc.onclick=()=>fc.classList.toggle('flip');
  $('#fcx').onclick=()=>{fcState=null;flash()};
  $('#fcyes').onclick=()=>{fcKnown[fcKey(c)]=1;fcSave();if(!c._again)s.known++;s.deck.shift();s.done++;fcRender()};
- $('#fcno').onclick=()=>{fcKnown[fcKey(c)]=0;fcSave();c._again=true;s.deck.shift();s.deck.splice(Math.min(s.deck.length,4+Math.floor(Math.random()*4)),0,c);fcRender()};
+ $('#fcno').onclick=()=>{fcKnown[fcKey(c)]=0;fcSave();if(!c._again)s.wrong.push(c);c._again=true;s.deck.shift();s.deck.splice(Math.min(s.deck.length,4+Math.floor(Math.random()*4)),0,c);fcRender()};
 }
 
 home();
