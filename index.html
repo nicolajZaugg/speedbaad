@@ -624,7 +624,10 @@ function home(){
  <div style="background:#eef5fb;border-radius:12px;padding:14px"><div class="small"><b>DEN RIGTIGE PRØVE</b></div><b style="font-size:17px">2 delprøver à 15 min · Del 1 max 2 fejl · Del 2 max 3 fejl</b><div class="small" style="margin-top:4px">Begge dele skal bestås hver for sig. Del 2 = søvejsregler (regel 5–10, 12–18) og afmærkning. Kilde: Dansk Sejlunions hjemmeside. Et andet DS-dokument nævner 31 spørgsmål og max 6 fejl – her trænes efter det strengeste.</div></div>
  <div style="background:#fff7d6;border-radius:12px;padding:14px"><div class="small"><b>DIT TRÆNINGSMÅL (KURSETS KRAV)</b></div><b style="font-size:17px">38 spørgsmål · max 3 fejl · 0 fejl i vigeregler og bøjer</b><div class="small" style="margin-top:4px">Watergames' testeksamen. Strengere end den rigtige prøve – består du den, er du klar.</div></div></div>
  <p class="small">Pensum følger Dansk Sejlunions prøvekrav: søvejsreglerne (regel 5–10 og 12–18), afmærkning, sikkerhed og nødprocedurer, båd og motor, søkort/GPS og vejr samt manøvrer.</p>
- <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn" onclick="go('exam')">📝 Start prøveeksamen</button><button class="btn ghost" onclick="go('train')">🎯 Træn et emne</button><button class="btn ghost" onclick="go('cheat')">📋 Læs huskereglerne</button></div></div>
+ <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:14px">
+ <button class="btn" style="padding:16px;font-size:16px" onclick="startExam('kursus')">⭐ Tag kursets testeksamen<br><span style="font-weight:500;font-size:13px;opacity:.85">38 spm · 40 min</span></button>
+ <button class="btn" style="padding:16px;font-size:16px;background:#1f4f7d" onclick="startExam('officiel')">📝 Tag den rigtige prøve<br><span style="font-weight:500;font-size:13px;opacity:.85">Del 1 + Del 2 · 2 × 15 min</span></button></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn ghost" onclick="go('exam')">🐢 Tag en prøve uden tidsgrænse</button><button class="btn ghost" onclick="go('train')">🎯 Træn et emne</button><button class="btn ghost" onclick="go('cheat')">📋 Læs huskereglerne</button></div></div>
  ${last.length?`<div class="panel"><h3 style="margin-top:0">Seneste prøver</h3><table>${last.map(h=>`<tr><td>${new Date(h.t).toLocaleString('da-DK',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td><td>${h.mode==='kursus'?'Kursus-test':h.mode==='del'?'Officiel (2 dele)':'Officiel'}</td><td>${h.r}/${h.n||31} rigtige</td><td>${h.f} fejl</td><td>${(h.pass??h.f<=6)?'<b style="color:var(--ok)">Bestået</b>':'<b style="color:var(--bad)">Ikke bestået</b>'}</td></tr>`).join('')}</table></div>`:''}
  <div class="panel"><h3 style="margin-top:0">Sådan bruger du træneren</h3><ol style="line-height:1.7;margin:0;padding-left:20px;font-size:14px">
  <li>Læs <b>Huskeregler</b> og gennemgå <b>Bøjer</b>.</li><li>Brug <b>Emnetræning</b> – du får forklaring efter hvert svar.</li><li>Tag <b>⭐ Kursets testeksamen</b>, indtil du består den 3 gange i træk – så er du også klar til den officielle.</li><li>Tjek <b>Statistik</b> – træningen giver dig automatisk flere spørgsmål i dine svage emner.</li></ol></div>`;
@@ -635,9 +638,11 @@ let examState=null;
 function exam(){
  if(examState&&!examState.done)return renderExam();
  app.innerHTML=`<h2 style="margin-top:0">📝 Prøveeksamen</h2><p class="small">Du kan gå frem og tilbage og markere spørgsmål. Svarene vises først, når du afleverer.</p><div class="topics">
- ${Object.entries(EXMODES).map(([k,m])=>`<button class="topic" data-m="${k}" ${k==='kursus'?'style="border-color:var(--accent)"':''}><b>${k==='kursus'?'⭐ ':''}${m.navn}</b><span>${m.besk}<br>Tid: ${m.partMin?'2 × '+m.partMin:m.min} min.</span></button>`).join('')}</div>`;
- app.querySelectorAll('.topic').forEach(b=>b.onclick=()=>{const m=b.dataset.m,M=EXMODES[m];examState={mode:m,qs:buildExam(m),ans:Array(M.n).fill(null),flag:Array(M.n).fill(false),i:0,part:0,t0:Date.now(),end:Date.now()+(M.partMin||M.min)*60000,done:false};renderExam()});
+ ${Object.entries(EXMODES).map(([k,m])=>`<button class="topic" data-m="${k}" ${k==='kursus'?'style="border-color:var(--accent)"':''}><b>${k==='kursus'?'⭐ ':''}${m.navn}</b><span>${m.besk}<br>Tid: ${m.partMin?'2 × '+m.partMin:m.min} min.</span></button>`).join('')}</div>
+ <label style="display:flex;gap:8px;align-items:center;margin-top:14px;font-size:15px"><input type="checkbox" id="notime" style="width:20px;height:20px"> Uden tidsgrænse (bare tag eksamenen i dit eget tempo)</label>`;
+ app.querySelectorAll('.topic').forEach(b=>b.onclick=()=>startExam(b.dataset.m,!$('#notime').checked));
 }
+function startExam(m,timed=true){const M=EXMODES[m];examState={mode:m,timed,qs:buildExam(m),ans:Array(M.n).fill(null),flag:Array(M.n).fill(false),i:0,part:0,t0:Date.now(),end:Date.now()+(M.partMin||M.min)*60000,done:false};document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x.dataset.v==='exam'));renderExam()}
 function renderExam(){
  clearRun();const s=examState,q=s.qs[s.i],M=EXMODES[s.mode];
  let lo=0,hi=s.qs.length-1;const bnd=M.parts?s.qs.findIndex(x=>!M.parts[0].topics.includes(x.topic)):-1;
@@ -657,6 +662,7 @@ function renderExam(){
  $('#flag').onclick=()=>{s.flag[s.i]=!s.flag[s.i];renderExam()};
  $('#submit').onclick=()=>{const un=s.ans.slice(lo,hi+1).filter(a=>a===null).length,fl=s.flag.slice(lo,hi+1).filter(Boolean).length;const p1=M.parts&&!s.part;
   if(un||fl||p1)modal(p1?'Aflever del 1?':'Aflever prøven?',`${un?`Du mangler at svare på <b>${un}</b> spørgsmål – de tæller som fejl. `:''}${fl?`Du har <b>${fl}</b> markerede spørgsmål. `:''}${p1?'Du kan ikke vende tilbage til del 1. Del 2 starter med nye 15 minutter.':''}`,[['Tilbage',()=>{}],[p1?'Aflever og start del 2':'Aflever',submitFn,'warn']]);else submitFn()};
+ if(s.timed===false){const el=$('#timer');if(el)el.textContent='⏱ Ingen tidsgrænse';return}
  const tick=()=>{const left=Math.max(0,s.end-Date.now()),m=Math.floor(left/60000),sec=Math.floor(left%60000/1000);const el=$('#timer');if(el){el.textContent=`⏱ ${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;el.classList.toggle('low',left<180000)}if(left<=0)submitFn()};
  tick();timerId=setInterval(tick,1000);
 }
